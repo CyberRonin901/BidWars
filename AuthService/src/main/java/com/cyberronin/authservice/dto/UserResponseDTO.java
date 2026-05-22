@@ -1,10 +1,11 @@
 package com.cyberronin.authservice.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.UUID;
 
 public record UserResponseDTO(
+        UUID id,
         String username,
-        String name,
         String role,
-        LocalDateTime createdAt
+        Instant createdAt
 ) {}

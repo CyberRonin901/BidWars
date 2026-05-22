@@ -4,15 +4,16 @@ import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
+import java.util.UUID;
 
 public class CustomUserDetails implements UserDetails {
     @Getter
-    private final Long userId; // The ID you want to pass
+    private final UUID userId; // The ID you want to pass
 
     private final String username;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomUserDetails(Long userId, String username, Collection<? extends GrantedAuthority> authorities) {
+    public CustomUserDetails(UUID userId, String username, Collection<? extends GrantedAuthority> authorities) {
         this.userId = userId;
         this.username = username;
         this.authorities = authorities;

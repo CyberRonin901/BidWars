@@ -2,7 +2,11 @@ package com.cyberronin.authservice.model;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @Builder // Added for easier object creation in Service
@@ -11,9 +15,16 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table("users")
 public class User {
     @Id
-    private Long id;
-    private String name;
+    private UUID id;
     private String username;
-    private String password; // Strictly the BCRYPT HASH
+    private String mobile;
+    private String location;
+
+    @Column("password_hash")
+    private String passwordHash; // BCRYPT HASH
+
     private String role;
+
+    @Column("created_at")
+    private Instant createdAt;
 }

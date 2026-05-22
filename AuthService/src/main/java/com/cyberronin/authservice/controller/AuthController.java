@@ -3,6 +3,7 @@ package com.cyberronin.authservice.controller;
 import com.cyberronin.authservice.dto.TokenResponseDTO;
 import com.cyberronin.authservice.dto.UserRequestDTO;
 import com.cyberronin.authservice.dto.UserResponseDTO;
+import com.cyberronin.authservice.dto.loginRequestDTO;
 import com.cyberronin.authservice.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public Mono<TokenResponseDTO> login(@Valid @RequestBody UserRequestDTO user) {
-        return authService.authenticate(user);
+    public Mono<TokenResponseDTO> login(@Valid @RequestBody loginRequestDTO loginRequest) {
+        return authService.authenticate(loginRequest.username(), loginRequest.password());
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.UUID;
 
 // NOT USED IN THIS SERVICE, IMPLEMENTED IN API GATEWAY
 
@@ -43,14 +44,14 @@ public class JwtFilter implements WebFilter {
             String token = authHeader.substring(7);
 
             if (jwtUtil.validateToken(token)) {
-                String userId = jwtUtil.extractUserId(token);
+                UUID userId = jwtUtil.extractUserId(token);
                 String username = jwtUtil.extractUsername(token);
                 String role = jwtUtil.extractRole(token);
 
                 List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
                 CustomUserDetails principal = new CustomUserDetails(
-                        Long.parseLong(userId),
+                        userId,
                         username,
                         authorities
                 );

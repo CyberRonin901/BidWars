@@ -14,13 +14,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
+import java.util.UUID;
+
 @Service
 public class AuthService {
     private final UserRepo userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    @Value("${JWT_EXPIRATION}")
+    @Value("${JWT_EXPIRATION:3600000}")
     private Long jwtExpiration;
 
     public AuthService(UserRepo userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
@@ -30,13 +33,14 @@ public class AuthService {
     }
 
     public Mono<UserResponseDTO> registerUser(UserRequestDTO request, String role) {
-        // 1. Map DTO to Entity immediately
+        // Map DTO to Entity
         User user = new User();
-        user.setName(request.name());
         user.setUsername(request.username());
-        // 2. Hash the raw password from the DTO
-        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setMobile(request.mobile());
+        user.setLocation(request.location());
+        user.setPasswordHash(passwordEncoder.encode(request.password())); // Hash the raw password from the DTO
         user.setRole(role);
+        user.setCreatedAt(Instant.now());
 
         return userRepository.save(user)
                 .map(this::mapToResponseDTO)
@@ -48,23 +52,24 @@ public class AuthService {
                 });
     }
 
-    public Mono<TokenResponseDTO> authenticate(UserRequestDTO request) {
-        // authenticate only needs username and password from the DTO
-        return userRepository.findUserByUsername(request.username())
-                .filter(u -> passwordEncoder.matches(request.password(), u.getPassword()))
+    public Mono<TokenResponseDTO> authenticate(String username, String rawPassword) {
+        // authenticate only needs username and password for checking if user is registered
+        return userRepository.findUserByUsername(username)
+                .filter(u -> passwordEncoder.matches(rawPassword, u.getPasswordHash()))
                 .map(u -> {
-                    String token = jwtUtil.generateToken(u.getUsername(), u.getId(), u.getRole());
-                    return new TokenResponseDTO(token, jwtExpiration);
+                    String token = jwtUtil.generateToken(u.getId(), u.getUsername(), u.getRole());
+                    Instant expiresAt = Instant.now().plusMillis(jwtExpiration);
+                    return new TokenResponseDTO(token, expiresAt);
                 })
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Credentials")));
     }
 
     private UserResponseDTO mapToResponseDTO(User user) {
         return new UserResponseDTO(
+                user.getId(),
                 user.getUsername(),
-                user.getName(),
                 user.getRole(),
-                java.time.LocalDateTime.now() // Ideally user.getCreatedAt() if auditing is enabled
+                user.getCreatedAt()
         );
     }
 }

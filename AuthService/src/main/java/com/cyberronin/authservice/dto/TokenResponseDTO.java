@@ -1,11 +1,13 @@
 package com.cyberronin.authservice.dto;
 
+import java.time.Instant;
+
 public record TokenResponseDTO(
         String token,
         String type,
-        long expiresIn
+        Instant expiresAt
 ) {
-    public TokenResponseDTO(String token, long expiresIn) {
-        this(token, "Bearer", expiresIn);
+    public TokenResponseDTO(String token, Instant expiresAt) {
+        this(token, "Bearer", expiresAt);
     }
 }
