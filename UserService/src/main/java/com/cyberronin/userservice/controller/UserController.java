@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
@@ -17,7 +19,7 @@ public class UserController {
     private final UserProfileService service;
 
     @GetMapping("/getDetails")
-    public Mono<User> getUserDetails (@RequestHeader("X-User-Id") String userId){
+    public Mono<User> getUserDetails (@RequestHeader("X-User-Id") UUID userId){
         return service.getUserById(userId);
     }
 }

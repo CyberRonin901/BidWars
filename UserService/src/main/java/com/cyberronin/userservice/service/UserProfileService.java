@@ -14,8 +14,7 @@ public class UserProfileService {
 
     private final UserRepo repo;
 
-    public Mono<User> getUserById(String userId) {
-        UUID id = UUID.fromString(userId);
-        return repo.findById(id);
+    public Mono<User> getUserById(UUID userId) {
+        return repo.findById(userId);
     }
 }

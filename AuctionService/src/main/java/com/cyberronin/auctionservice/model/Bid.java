@@ -15,6 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Bid {
     private UUID id;
+
     private UUID userId;
     private long amount;
     private long timestamp; // Stored as plain long unix epoch millisecond

@@ -1,6 +1,7 @@
 package com.cyberronin.auctionservice.service;
 
 import com.cyberronin.auctionservice.dto.CreateAuctionRequestDTO;
+import com.cyberronin.auctionservice.httpExchangeClient.UserServiceExchangeClient;
 import com.cyberronin.auctionservice.model.Auction;
 import com.cyberronin.auctionservice.model.AuctionStatus;
 import com.cyberronin.auctionservice.repo.ActiveAuctionRepo;
@@ -19,23 +20,36 @@ public class AuctionService
 {
     private final AuctionRepo auctionRepo;
     private final ActiveAuctionRepo activeAuctionRepo;
+    private final UserServiceExchangeClient userClient;
 
     // TODO: saving creates an event to the StorageService to store data
-    // TODO: make call to UserService to get full data of seller and change status to active and update Active list
-    public Mono<Auction> createAuction(CreateAuctionRequestDTO reqObj)
-    {
-        Auction auction = new Auction();
-        auction.setId(UUID.randomUUID());
-        auction.setCreatedAt(Instant.now().toEpochMilli());
-        auction.setExpiresAt(reqObj.expiresAt().toEpochMilli());
-        auction.setStatus(AuctionStatus.PENDING);
-        auction.setSellerId(reqObj.sellerId());
-        auction.setItemName(reqObj.itemName());
-        auction.setItemDescription(reqObj.itemDescription());
-        auction.setItemImageUrl(reqObj.itemImageUrl());
-        auction.setStartingAmount(reqObj.startingAmount());
+    public Mono<Auction> createAuction(CreateAuctionRequestDTO reqObj) {
+        return userClient.getUserDetails(reqObj.sellerId())
+                // if user doesn't exist
+                .switchIfEmpty(Mono.error(new RuntimeException("User profile not found")))
 
-        return auctionRepo.save(auction);
+                // Map and build the execution payload once user data arrives
+                .flatMap(userProfile -> {
+                    Auction auction = Auction.builder()
+                            .id(UUID.randomUUID())
+                            .createdAt(Instant.now().toEpochMilli())
+                            .expiresAt(reqObj.expiresAt().toEpochMilli())
+                            .status(AuctionStatus.ACTIVE)
+                            .sellerId(reqObj.sellerId())
+                            .sellerName(userProfile.username())
+                            .sellerLocation(userProfile.location())
+                            .itemName(reqObj.itemName())
+                            .itemDescription(reqObj.itemDescription())
+                            .itemImageUrl(reqObj.itemImageUrl())
+                            .startingAmount(reqObj.startingAmount())
+                            .build();
+
+                    return auctionRepo.save(auction);
+                })
+                .flatMap(savedAuction -> activeAuctionRepo.addActiveAuction(savedAuction.getId())
+                        // Maintain the reactive chain pipeline by returning the Auction object
+                        .thenReturn(savedAuction)
+                );
     }
 
     public Flux<Auction> getAllLiveAuctions(){
