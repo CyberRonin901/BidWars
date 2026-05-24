@@ -1,6 +1,4 @@
-package com.cyberronin.auctionservice.dto;
-
-import org.springframework.data.annotation.Id;
+package com.cyberronin.auctionservice.feign.dto;
 
 import java.time.Instant;
 import java.util.UUID;

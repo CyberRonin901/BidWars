@@ -6,7 +6,6 @@ import com.cyberronin.auctionstorageservice.model.Auction;
 import com.cyberronin.auctionstorageservice.repo.AuctionRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
@@ -16,8 +15,7 @@ public class AuctionService {
 
     private final AuctionRepo auctionRepo;
 
-    public Mono<Auction> save(SaveAuctionReqDTO reqObj) {
-        // Map the payload directly into your R2DBC execution model
+    public Auction save(SaveAuctionReqDTO reqObj) {
         Auction auction = Auction.builder()
                 .id(reqObj.id())
                 .createdAt(reqObj.createdAt())
@@ -28,28 +26,23 @@ public class AuctionService {
                 .itemDescription(reqObj.itemDescription())
                 .itemImageUrl(reqObj.itemImageUrl())
                 .startingAmount(reqObj.startingAmount())
-                .isNewRecord(true) // Explicitly flags R2DBC to issue a clean SQL INSERT statement
                 .build();
 
         return auctionRepo.save(auction);
     }
 
-
-    public Mono<Auction> getAuctionById(UUID auctionId) {
-        return auctionRepo.findById(auctionId);
+    public Auction getAuctionById(UUID auctionId) {
+        return auctionRepo.findById(auctionId).orElse(null);
     }
 
-    public Mono<Auction> updateHighestBid(UUID auctionId, UpdateHighestBidReqDTO reqObj) {
-        return auctionRepo.findById(auctionId)
-                .switchIfEmpty(Mono.error(new RuntimeException("Auction not found with ID: " + auctionId)))
-                .flatMap(existingAuction -> {
-                    existingAuction.setHighestBidAmount(reqObj.highestBidAmount());
-                    existingAuction.setHighestBidUserId(reqObj.highestBidUserId());
-                    existingAuction.setHighestBidTimestamp(reqObj.highestBidTimestamp());
+    public Auction updateHighestBid(UUID auctionId, UpdateHighestBidReqDTO reqObj) {
+        Auction existingAuction = auctionRepo.findById(auctionId)
+                .orElseThrow(() -> new RuntimeException("Auction not found with ID: " + auctionId));
 
-                    existingAuction.setNewRecord(false); // Forces R2DBC SQL UPDATE
+        existingAuction.setHighestBidAmount(reqObj.highestBidAmount());
+        existingAuction.setHighestBidUserId(reqObj.highestBidUserId());
+        existingAuction.setHighestBidTimestamp(reqObj.highestBidTimestamp());
 
-                    return auctionRepo.save(existingAuction);
-                });
+        return auctionRepo.save(existingAuction);
     }
 }

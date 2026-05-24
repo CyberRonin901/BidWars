@@ -2,7 +2,7 @@ package com.cyberronin.auctionstorageservice.dto;
 
 import java.util.UUID;
 
-public record SaveBidReqDTO(
+public record BidDTO(
         UUID id,
         UUID userId,
         long amount,

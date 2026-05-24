@@ -1,12 +1,12 @@
 package com.cyberronin.userservice.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -15,19 +15,20 @@ import java.util.UUID;
 @Builder // Added for easier object creation in Service
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("users")
+@Entity(name = "users")
 public class User {
+
     @Id
     private UUID id;
     private String username;
     private String mobile;
     private String location;
 
-    @Column("password_hash")
+    @Column(name = "password_hash")
     private String passwordHash; // BCRYPT HASH
 
     private String role;
 
-    @Column("created_at")
+    @Column(name = "created_at")
     private Instant createdAt;
 }

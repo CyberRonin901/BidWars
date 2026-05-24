@@ -1,15 +1,13 @@
 package com.cyberronin.auctionstorageservice.controller;
 
-import com.cyberronin.auctionstorageservice.dto.SaveBidReqDTO;
-import com.cyberronin.auctionstorageservice.dto.UpdateHighestBidReqDTO;
-import com.cyberronin.auctionstorageservice.model.Auction;
+import com.cyberronin.auctionstorageservice.dto.BidDTO;
 import com.cyberronin.auctionstorageservice.model.Bid;
 import com.cyberronin.auctionstorageservice.service.BidService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -20,12 +18,13 @@ public class BidController {
     private final BidService bidService;
 
     @PostMapping("/save/{id}")
-    public Mono<Bid> save(@RequestBody SaveBidReqDTO requestDTO, @PathVariable("id") UUID auctionId){
-        return bidService.save(requestDTO, auctionId);
+    public ResponseEntity<Void> save(@RequestBody BidDTO requestDTO, @PathVariable("id") UUID auctionId){
+        bidService.save(requestDTO, auctionId);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/bidHistory/{id}")
-    public Flux<Bid> getBidHistory(@PathVariable("id") UUID auctionId){
-        return bidService.getBidHistory(auctionId);
+    public ResponseEntity<List<BidDTO>> getBidHistory(@PathVariable("id") UUID auctionId){
+        return ResponseEntity.ok(bidService.getBidHistory(auctionId));
     }
 }
