@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public record CreateAuctionRequestDTO(
     UUID sellerId,
-    Instant expiresAt,
+    long expiresAt, // epoch milli
     String itemName,
     String itemDescription,
     String itemImageUrl,

@@ -2,9 +2,8 @@ package com.cyberronin.auctionservice.model;
 
 // This is the bid room / data i.e item and seller details
 
-
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
 
 import java.util.UUID;
 
@@ -12,7 +11,6 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 public class Auction {
 
     @Id
@@ -21,7 +19,6 @@ public class Auction {
     private long createdAt; // epoch time
     private long expiresAt; // epoch time
 
-    @Enumerated(EnumType.STRING) // Persists the enum name (e.g., "ACTIVE") instead of integer index
     private AuctionStatus status;
 
     private UUID sellerId;
@@ -30,7 +27,6 @@ public class Auction {
 
     private String itemName;
 
-    @Column(columnDefinition = "TEXT")
     private String itemDescription;
 
     private String itemImageUrl;

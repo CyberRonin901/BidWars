@@ -1,12 +1,12 @@
 package com.cyberronin.userservice.repo;
 
 import com.cyberronin.userservice.model.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-@Repository
-public interface UserRepo extends JpaRepository<User, UUID> {
-
+public interface UserRepo extends R2dbcRepository<User, UUID>
+{
+    Mono<User> findUserByUsername(String username);
 }

@@ -1,0 +1,35 @@
+package com.cyberronin.userservice.controller;
+
+import com.cyberronin.userservice.dto.*;
+import com.cyberronin.userservice.service.AuthService;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+import org.springframework.http.HttpStatus;
+
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+    private final AuthService authService; // Move logic here
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @PostMapping("/user/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<UserResponseDTO> register(@Valid @RequestBody UserRequestDTO user) {
+        return authService.registerUser(user, "ROLE_USER");
+    }
+
+    @PostMapping("/admin/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<UserResponseDTO> registerAdmin(@Valid @RequestBody UserRequestDTO user) {
+        return authService.registerUser(user, "ROLE_ADMIN");
+    }
+
+    @PostMapping("/login")
+    public Mono<TokenResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
+        return authService.authenticate(loginRequest.username(), loginRequest.password());
+    }
+}

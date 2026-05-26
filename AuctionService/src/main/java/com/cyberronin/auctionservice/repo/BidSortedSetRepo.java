@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,6 +18,8 @@ public class BidSortedSetRepo {
     // ZADD: Add a bid; returns primitive Boolean indicating if it's a new element
     public Boolean addBid(UUID auctionId, String userId, double bidAmount) {
         String key = KEY_PREFIX + auctionId.toString();
-        return redisTemplate.opsForZSet().add(key, userId, bidAmount);
+        long epochTime = Instant.now().toEpochMilli();
+        String member = Long.toString(epochTime) + ":" + userId;
+        return redisTemplate.opsForZSet().add(key, member, bidAmount);
     }
 }

@@ -1,11 +1,13 @@
 package com.cyberronin.auctionservice.repo;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Repository
 @RequiredArgsConstructor
@@ -15,14 +17,20 @@ public class AuctionHashRepo {
     private static final String KEY_PREFIX = "auction:";
 
     // HSET: Save or Update auction details synchronously
-    public void save(UUID auctionId, Map<String, String> auctionData) {
+    public void save(UUID auctionId, Map<String, String> auctionData, long ttl)
+    {
+        String key = KEY_PREFIX + auctionId.toString();
         redisTemplate.opsForHash()
-                .putAll(KEY_PREFIX + auctionId.toString(), auctionData);
+                .putAll(key, auctionData);
+
+        if (ttl > 0)
+            redisTemplate.expire(key, ttl, TimeUnit.MILLISECONDS);
     }
 
     // HGETALL: Fetch current real-time auction state instantly
-    public Map<Object, Object> getById(UUID auctionId) {
-        return redisTemplate.opsForHash()
-                .entries(KEY_PREFIX + auctionId.toString());
+    public Map<String, String> getById(UUID auctionId)
+    {
+        HashOperations<String, String, String> hashOperations = redisTemplate.opsForHash();
+        return hashOperations.entries(KEY_PREFIX + auctionId.toString());
     }
 }

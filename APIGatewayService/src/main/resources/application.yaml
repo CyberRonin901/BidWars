@@ -26,9 +26,9 @@ spring:
 #                    args:
 #                      requiredRole: "ROLE_USER"
 
-#         -----Routing for Auth Service Admin endpoint-----
+#         -----Routing for User Service Admin endpoint-----
               - id: Auth-Admin-Service
-                uri: lb://AUTH-SERVICE
+                uri: lb://USER-SERVICE
                 predicates:
                   - Path=/auth/admin/**
                 filters:
@@ -37,9 +37,9 @@ spring:
                     args:
                       requiredRole: "ROLE_ADMIN"
 
-#         -----Routing for Auth Service public endpoints-----
+#         -----Routing for User Service public endpoints-----
               - id: Auth-Public-Service
-                uri: lb://AUTH-SERVICE
+                uri: lb://USER-SERVICE
                 predicates:
                   - Path=/auth/**
                 filters:
@@ -49,6 +49,23 @@ spring:
                       redis-rate-limiter.replenishRate: 3 # no. of tokens added to the bucket every second
                       redis-rate-limiter.burstCapacity: 3 # Maximum tokens the bucket can hold (burst capacity)
 
+
+              - id: User-Service
+                uri: lb://USER-SERVICE
+                predicates:
+                  - Path=/user/**
+                filters:
+                  - AuthenticationFilter
+                  - name: RequestRateLimiter
+                    args:
+                      key-resolver: "#{@perIPKeyResolver}"
+                      redis-rate-limiter.replenishRate: 3
+                      redis-rate-limiter.burstCapacity: 3
+
+              - id: Auction-Service
+                uri: lb://AUCTION-SERVICE
+                predicates:
+                  - Path=/auction/**
 #          discovery:
 #            locator:
 #              enabled: true
