@@ -1,5 +1,6 @@
 package com.cyberronin.auctionservice.repo;
 
+import com.cyberronin.auctionservice.util.Prefix;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 public class ActiveAuctionsSetRepo {
 
     private final StringRedisTemplate redisTemplate;
-    private static final String KEY = "auctions:active";
+    private static final String KEY = Prefix.ACTIVE_AUCTIONS;
 
     // SADD: Synchronously mark an auction as active
     public Long addAuction(UUID auctionId) {

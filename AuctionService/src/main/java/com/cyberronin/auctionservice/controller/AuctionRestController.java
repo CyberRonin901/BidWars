@@ -1,6 +1,7 @@
 package com.cyberronin.auctionservice.controller;
 
 import com.cyberronin.auctionservice.dto.CreateAuctionRequestDTO;
+import com.cyberronin.auctionservice.dto.UserDetailsResponseDTO;
 import com.cyberronin.auctionservice.model.Auction;
 import com.cyberronin.auctionservice.service.AuctionService;
 import lombok.RequiredArgsConstructor;
@@ -37,5 +38,21 @@ public class AuctionRestController {
     @GetMapping("/get-all-active")
     public ResponseEntity<List<Auction>> getAllActiveAuctions(){
         return ResponseEntity.ok(service.getAllActive());
+    }
+
+    @GetMapping("/cancel/{id}")
+    public ResponseEntity<String> cancelAuction(@PathVariable UUID id){
+        service.cancelAuction(id);
+        return ResponseEntity.ok("Auction Cancelled with id: " + id);
+    }
+
+    @GetMapping("/get-seller-details/{id}")
+    public ResponseEntity<UserDetailsResponseDTO> getSellerDetails(@PathVariable UUID id){
+        return ResponseEntity.ok(service.getSellerDetails(id));
+    }
+
+    @GetMapping("/get-highest-bidder-details/{id}")
+    public ResponseEntity<UserDetailsResponseDTO> getHighestBidderDetails(@PathVariable UUID id){
+        return ResponseEntity.ok(service.getHighestBidderDetails(id));
     }
 }

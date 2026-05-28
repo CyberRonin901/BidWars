@@ -1,6 +1,7 @@
 package com.cyberronin.auctionservice.service;
 
 import com.cyberronin.auctionservice.dto.CreateAuctionRequestDTO;
+import com.cyberronin.auctionservice.dto.UserDetailsResponseDTO;
 import com.cyberronin.auctionservice.feign.client.UserServiceInterface;
 import com.cyberronin.auctionservice.feign.dto.UserResponseDTO;
 import com.cyberronin.auctionservice.model.Auction;
@@ -8,7 +9,6 @@ import com.cyberronin.auctionservice.model.AuctionStatus;
 import com.cyberronin.auctionservice.repo.*;
 import com.cyberronin.auctionservice.util.AuctionMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,14 +24,17 @@ public class AuctionService
 
     private final UserServiceInterface userServiceInterface;
 
-    public Auction createAuction(CreateAuctionRequestDTO reqObj) {
-
+    public Auction createAuction(CreateAuctionRequestDTO reqObj)
+    {
          UserResponseDTO sellerDetails = userServiceInterface.getUserDetails(reqObj.sellerId());
+
+        long now = Instant.now().toEpochMilli();
+        long expiresAt = reqObj.expiresIn() * 1000 + now;
 
          Auction auction = Auction.builder()
                  .id(UUID.randomUUID())
-                 .createdAt(Instant.now().toEpochMilli())
-                 .expiresAt(reqObj.expiresAt())
+                 .createdAt(now)
+                 .expiresAt(expiresAt)
                  .status(AuctionStatus.ACTIVE)
                  .sellerId(reqObj.sellerId())
                  .sellerName(sellerDetails.username())
@@ -44,8 +47,11 @@ public class AuctionService
 
         Map<String, String> auctionMap = AuctionMapper.toMap(auction);
 
-        long ttl = auction.getExpiresAt() - Instant.now().toEpochMilli();
+        long ttl = reqObj.expiresIn() * 1000;
+
         auctionRepo.save(auction.getId(), auctionMap, ttl);
+        bidRepo.setExpiry(auction.getId(), ttl);
+
         activeAuctionsRepo.addAuction(auction.getId());
 
         return auction;
@@ -62,5 +68,34 @@ public class AuctionService
                 .map(this::getAuctionById)
                 .filter(Objects::nonNull)
                 .toList();
+    }
+
+    public void cancelAuction(UUID id) {
+        auctionRepo.updateStatus(id, AuctionStatus.CANCELLED);
+        activeAuctionsRepo.removeAuction(id);
+    }
+
+    public UserDetailsResponseDTO getSellerDetails(UUID auctionId) {
+        UUID sellerId = auctionRepo.getSellerId(auctionId);
+
+        UserResponseDTO sellerDetails = userServiceInterface.getUserDetails(sellerId);
+
+        return new UserDetailsResponseDTO(
+                sellerDetails.username(),
+                sellerDetails.mobile(),
+                sellerDetails.location()
+        );
+    }
+
+    public UserDetailsResponseDTO getHighestBidderDetails(UUID auctionId) {
+        UUID highestBidderId = auctionRepo.getHighestBidderId(auctionId);
+
+        UserResponseDTO userDetails = userServiceInterface.getUserDetails(highestBidderId);
+
+        return new UserDetailsResponseDTO(
+                userDetails.username(),
+                userDetails.mobile(),
+                userDetails.location()
+        );
     }
 }
