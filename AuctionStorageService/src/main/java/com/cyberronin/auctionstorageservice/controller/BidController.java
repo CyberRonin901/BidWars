@@ -17,11 +17,11 @@ public class BidController {
 
     private final BidService bidService;
 
-    @PostMapping("/save/{id}")
-    public ResponseEntity<Void> save(@RequestBody BidDTO requestDTO, @PathVariable("id") UUID auctionId){
-        bidService.save(requestDTO, auctionId);
-        return ResponseEntity.ok().build();
-    }
+//    @PostMapping("/save/{id}")
+//    public ResponseEntity<Void> save(@RequestBody BidDTO requestDTO, @PathVariable("id") UUID auctionId){
+//        bidService.save(requestDTO, auctionId);
+//        return ResponseEntity.ok().build();
+//    }
 
     @GetMapping("/bidHistory/{id}")
     public ResponseEntity<List<BidDTO>> getBidHistory(@PathVariable("id") UUID auctionId){

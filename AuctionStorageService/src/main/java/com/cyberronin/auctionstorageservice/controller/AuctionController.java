@@ -1,5 +1,6 @@
 package com.cyberronin.auctionstorageservice.controller;
 
+import com.cyberronin.auctionstorageservice.dto.AuctionHighestBidUpdateDTO;
 import com.cyberronin.auctionstorageservice.dto.SaveAuctionReqDTO;
 import com.cyberronin.auctionstorageservice.dto.UpdateHighestBidReqDTO;
 import com.cyberronin.auctionstorageservice.model.Auction;
@@ -17,11 +18,11 @@ public class AuctionController {
 
     private final AuctionService auctionService;
 
-    @PostMapping("/save")
-    public ResponseEntity<Void> saveAuction(@RequestBody SaveAuctionReqDTO reqObj){
-        auctionService.save(reqObj);
-        return ResponseEntity.ok().build();
-    }
+//    @PostMapping("/save")
+//    public ResponseEntity<Void> saveAuction(@RequestBody SaveAuctionReqDTO reqObj){
+//        auctionService.save(reqObj);
+//        return ResponseEntity.ok().build();
+//    }
 
     @GetMapping("/get/{id}")
     public ResponseEntity<Auction> getAuctionById(@PathVariable("id") UUID auctionId){
@@ -29,10 +30,10 @@ public class AuctionController {
         return ResponseEntity.ok(auction);
     }
 
-    @PostMapping("/updateHighestBid/{id}")
-    public ResponseEntity<Void> updateHighestBid(@PathVariable("id") UUID auctionId, @RequestBody UpdateHighestBidReqDTO reqObj)
-    {
-        auctionService.updateHighestBid(auctionId, reqObj);
-        return ResponseEntity.ok().build();
-    }
+//    @PostMapping("/updateHighestBid/{id}")
+//    public ResponseEntity<Void> updateHighestBid(@RequestBody AuctionHighestBidUpdateDTO reqObj)
+//    {
+//        auctionService.updateHighestBid(reqObj);
+//        return ResponseEntity.ok().build();
+//    }
 }

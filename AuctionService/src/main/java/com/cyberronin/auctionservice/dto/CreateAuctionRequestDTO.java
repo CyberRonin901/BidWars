@@ -1,6 +1,5 @@
 package com.cyberronin.auctionservice.dto;
 
-import java.time.Instant;
 import java.util.UUID;
 
 public record CreateAuctionRequestDTO(

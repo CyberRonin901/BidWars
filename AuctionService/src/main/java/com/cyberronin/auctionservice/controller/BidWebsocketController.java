@@ -1,6 +1,6 @@
 package com.cyberronin.auctionservice.controller;
 
-import com.cyberronin.auctionservice.dto.BidRequestDTO;
+import com.cyberronin.auctionservice.dto.BidDTO;
 import com.cyberronin.auctionservice.service.BidService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -26,7 +26,7 @@ public class BidWebsocketController {
     // Client sends to: /app/place-bid/{auction-id}
     // Receive at : /topic/auction/{auctionId}
     @MessageMapping("/place-bid/{auctionId}")
-    public void handleIncomingBid(@DestinationVariable UUID auctionId, BidRequestDTO bidDto) {
+    public void handleIncomingBid(@DestinationVariable UUID auctionId, BidDTO bidDto) {
         bidService.processAndBroadcastBid(auctionId, bidDto);
     }
 }

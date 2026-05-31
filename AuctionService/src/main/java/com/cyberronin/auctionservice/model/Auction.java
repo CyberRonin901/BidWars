@@ -26,12 +26,10 @@ public class Auction {
     private String sellerLocation;
 
     private String itemName;
-
     private String itemDescription;
-
     private String itemImageUrl;
-
     private long startingAmount;
+
     private long highestBidAmount;
     private UUID highestBidUserId;
     private long highestBidTimestamp;

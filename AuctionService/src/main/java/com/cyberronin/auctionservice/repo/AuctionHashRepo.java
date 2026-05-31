@@ -31,7 +31,7 @@ public class AuctionHashRepo {
         }
     }
 
-    // HGETALL: Fetch current real-time auction state instantly
+    // HGETALL: Fetch current real-time auction state
     public Map<String, String> getById(UUID auctionId)
     {
         HashOperations<String, String, String> hashOperations = redisTemplate.opsForHash();

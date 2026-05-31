@@ -1,11 +1,13 @@
 package com.cyberronin.auctionservice.service;
 
+import com.cyberronin.auctionservice.dto.AuctionStatusUpdateDTO;
 import com.cyberronin.auctionservice.dto.CreateAuctionRequestDTO;
 import com.cyberronin.auctionservice.dto.UserDetailsResponseDTO;
 import com.cyberronin.auctionservice.feign.client.UserServiceInterface;
 import com.cyberronin.auctionservice.feign.dto.UserResponseDTO;
 import com.cyberronin.auctionservice.model.Auction;
 import com.cyberronin.auctionservice.model.AuctionStatus;
+import com.cyberronin.auctionservice.producer.RabbitMQProducer;
 import com.cyberronin.auctionservice.repo.*;
 import com.cyberronin.auctionservice.util.AuctionMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class AuctionService
     private final ActiveAuctionsSetRepo activeAuctionsRepo;
     private final AuctionHashRepo auctionRepo;
     private final BidSortedSetRepo bidRepo;
+    private final RabbitMQProducer rabbitMQProducer;
 
     private final UserServiceInterface userServiceInterface;
 
@@ -54,6 +57,9 @@ public class AuctionService
 
         activeAuctionsRepo.addAuction(auction.getId());
 
+        rabbitMQProducer.auctionCreation(auction);
+        rabbitMQProducer.auctionExpire(auction.getId(), ttl);
+
         return auction;
     }
 
@@ -73,6 +79,13 @@ public class AuctionService
     public void cancelAuction(UUID id) {
         auctionRepo.updateStatus(id, AuctionStatus.CANCELLED);
         activeAuctionsRepo.removeAuction(id);
+
+        rabbitMQProducer.auctionStatusUpdate(
+                new AuctionStatusUpdateDTO(
+                    id,
+                    AuctionStatus.CANCELLED
+                )
+        );
     }
 
     public UserDetailsResponseDTO getSellerDetails(UUID auctionId) {

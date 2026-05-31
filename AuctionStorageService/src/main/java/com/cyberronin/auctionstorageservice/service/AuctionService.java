@@ -1,9 +1,12 @@
 package com.cyberronin.auctionstorageservice.service;
 
+import com.cyberronin.auctionstorageservice.dto.AuctionHighestBidUpdateDTO;
 import com.cyberronin.auctionstorageservice.dto.SaveAuctionReqDTO;
 import com.cyberronin.auctionstorageservice.dto.UpdateHighestBidReqDTO;
 import com.cyberronin.auctionstorageservice.model.Auction;
+import com.cyberronin.auctionstorageservice.model.AuctionStatus;
 import com.cyberronin.auctionstorageservice.repo.AuctionRepo;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +18,7 @@ public class AuctionService {
 
     private final AuctionRepo auctionRepo;
 
-    public Auction save(SaveAuctionReqDTO reqObj) {
+    public void save(SaveAuctionReqDTO reqObj) {
         Auction auction = Auction.builder()
                 .id(reqObj.id())
                 .createdAt(reqObj.createdAt())
@@ -28,21 +31,27 @@ public class AuctionService {
                 .startingAmount(reqObj.startingAmount())
                 .build();
 
-        return auctionRepo.save(auction);
+        auctionRepo.save(auction);
     }
 
     public Auction getAuctionById(UUID auctionId) {
         return auctionRepo.findById(auctionId).orElse(null);
     }
 
-    public Auction updateHighestBid(UUID auctionId, UpdateHighestBidReqDTO reqObj) {
-        Auction existingAuction = auctionRepo.findById(auctionId)
-                .orElseThrow(() -> new RuntimeException("Auction not found with ID: " + auctionId));
+    public void updateHighestBid(AuctionHighestBidUpdateDTO dto)
+    {
+        Auction existingAuction = auctionRepo.findById(dto.id())
+                .orElseThrow(() -> new RuntimeException("Auction not found with ID: " + dto.id()));
 
-        existingAuction.setHighestBidAmount(reqObj.highestBidAmount());
-        existingAuction.setHighestBidUserId(reqObj.highestBidUserId());
-        existingAuction.setHighestBidTimestamp(reqObj.highestBidTimestamp());
+        existingAuction.setHighestBidAmount(dto.highestBidAmount());
+        existingAuction.setHighestBidUserId(dto.highestBidUserId());
+        existingAuction.setHighestBidTimestamp(dto.highestBidTimestamp());
 
-        return auctionRepo.save(existingAuction);
+        auctionRepo.save(existingAuction);
+    }
+
+    @Transactional
+    public void updateStatus(UUID id, AuctionStatus status) {
+        auctionRepo.updateStatus(id, status);
     }
 }

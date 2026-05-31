@@ -1,6 +1,6 @@
 package com.cyberronin.auctionservice.repo;
 
-import com.cyberronin.auctionservice.dto.BidRequestDTO;
+import com.cyberronin.auctionservice.dto.BidDTO;
 import com.cyberronin.auctionservice.util.LuaScripts;
 import com.cyberronin.auctionservice.util.Prefix;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ public class BidSortedSetRepo {
         return false;
     }
 
-    public boolean executeBidScript(UUID auctionId, BidRequestDTO bidDto)
+    public boolean executeBidScript(UUID auctionId, BidDTO bidDto)
     {
         String bidKey = Prefix.BID_ZSET + auctionId.toString();
         String auctionHashKey = Prefix.AUCTION_HASH + auctionId.toString();

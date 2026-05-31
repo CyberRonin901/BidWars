@@ -16,16 +16,16 @@ public class BidService {
 
     private final BidRepo bidRepo;
 
-    public Bid save(BidDTO reqObj, UUID auctionId) {
+    public void save(BidDTO reqObj) {
         Bid bid = Bid.builder()
-                .id(reqObj.id())
-                .auctionId(auctionId)
+                .id(UUID.randomUUID())
+                .auctionId(reqObj.auctionId())
                 .userId(reqObj.userId())
                 .amount(reqObj.amount())
                 .timestamp(reqObj.timestamp())
                 .build();
 
-        return bidRepo.save(bid);
+        bidRepo.save(bid);
     }
 
     public List<BidDTO> getBidHistory(UUID auctionId) {

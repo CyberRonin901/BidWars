@@ -1,6 +1,9 @@
 package com.cyberronin.auctionservice.dto;
 
-public record BidResponseDTO (
+import java.util.UUID;
+
+public record BidDTO(
+        UUID userId,
         String username,
         long amount
 ){}
