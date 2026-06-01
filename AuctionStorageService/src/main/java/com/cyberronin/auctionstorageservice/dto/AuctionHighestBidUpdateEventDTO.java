@@ -1,8 +1,8 @@
-package com.cyberronin.auctionservice.dto;
+package com.cyberronin.auctionstorageservice.dto;
 
 import java.util.UUID;
 
-public record AuctionHighestBidUpdateDTO(
+public record AuctionHighestBidUpdateEventDTO(
         UUID id,
         UUID highestBidUserId,
         long highestBidAmount,

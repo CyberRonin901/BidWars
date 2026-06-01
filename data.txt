@@ -1,0 +1,102 @@
+========================================================================
+                      BIDWARS DUMMY DATA FOR TESTING
+========================================================================
+
+Use this file to copy-paste mock UUIDs, REST payloads, and WebSocket
+messages directly into the CLI, REST Clients, or the HTML Test Dashboard.
+
+------------------------------------------------------------------------
+1. PRE-GENERATED TEST UUIDS
+------------------------------------------------------------------------
+
+Sellers:
+- NeonRider (Seller A)  : d3b07384-d113-49d3-a5f1-8f533a1e2f42
+- RetroVibe (Seller B)  : a1208945-b456-4edc-b6f8-9a3d421e78fc
+- ShadowHacker (Seller C): 9fe456a2-cb3d-4781-8bfe-30eefbc87d1a
+
+Bidders:
+- cyber_ronin (Bidder 1): 7b6e92c4-3a21-4f1a-bd3f-723a10e4a9bc
+- glitch_ghost (Bidder 2): f0f09a8b-7123-4bde-8f8f-b98cc761a293
+- pixel_punk (Bidder 3) : 23098f92-da8e-4a62-83b1-e2837bc2c004
+- solo_netrunner (Bidder 4): cba89e02-4ef8-4921-bcde-572ef910c283
+
+Sample Auctions (Mock IDs):
+- Auction 1 (Active)    : c292cb00-ebdf-4a92-9447-0e6d54bc0891
+- Auction 2 (Active)    : e82f1b04-ca13-47a2-9a02-23cbf9de01aa
+
+------------------------------------------------------------------------
+2. REST ENDPOINTS - DUMMY CREATE payloads (POST /auction/create)
+------------------------------------------------------------------------
+
+--- ITEM A: Legend Cybernetic Arm ---
+{
+  "sellerId": "d3b07384-d113-49d3-a5f1-8f533a1e2f42",
+  "expiresIn": 3600,
+  "itemName": "Legendary Cybernetic Arm",
+  "itemDescription": "Slightly used cybernetic arm with chrome finish, integrated grappler hook, and high-torque servomotors. Fits standard shoulder socket.",
+  "itemImageUrl": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=600",
+  "startingAmount": 5000
+}
+
+--- ITEM B: Retro VR Neural Visor ---
+{
+  "sellerId": "a1208945-b456-4edc-b6f8-9a3d421e78fc",
+  "expiresIn": 1800,
+  "itemName": "Retro VR Neural Visor",
+  "itemDescription": "Circa 2095 retro VR glasses. Retrofitted with direct neural-link interfaces and dynamic spatial audio nodes. Minor scratches on visual visor.",
+  "itemImageUrl": "https://images.unsplash.com/photo-1593508512255-86ab42a8e620?q=80&w=600",
+  "startingAmount": 2200
+}
+
+--- ITEM C: Stealth Carbon Hoverboard ---
+{
+  "sellerId": "9fe456a2-cb3d-4781-8bfe-30eefbc87d1a",
+  "expiresIn": 7200,
+  "itemName": "Stealth Carbon Hoverboard",
+  "itemDescription": "Military-grade carbon fiber body hoverboard. Ultra quiet repulsor-coils, active optical camouflage skin, and high capacity graphene battery pack.",
+  "itemImageUrl": "https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?q=80&w=600",
+  "startingAmount": 12500
+}
+
+--- ITEM D: Vintage Cyberpunk Neon Jacket ---
+{
+  "sellerId": "d3b07384-d113-49d3-a5f1-8f533a1e2f42",
+  "expiresIn": 86400,
+  "itemName": "Vintage Cyberpunk Neon Jacket",
+  "itemDescription": "A rare collector's jacket with integrated programmable LED arrays and neon active piping in excellent condition.",
+  "itemImageUrl": "https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=600",
+  "startingAmount": 15000
+}
+
+------------------------------------------------------------------------
+3. WEBSOCKET ENDPOINTS - DUMMY PLACE-BID PAYLOADS
+------------------------------------------------------------------------
+Target Destination: /app/place-bid/{auctionId}
+
+--- BID A (Initial Bid) ---
+{
+  "userId": "7b6e92c4-3a21-4f1a-bd3f-723a10e4a9bc",
+  "username": "cyber_ronin",
+  "amount": 5500
+}
+
+--- BID B (Counter Bid) ---
+{
+  "userId": "f0f09a8b-7123-4bde-8f8f-b98cc761a293",
+  "username": "glitch_ghost",
+  "amount": 6200
+}
+
+--- BID C (High-Roller Bid) ---
+{
+  "userId": "23098f92-da8e-4a62-83b1-e2837bc2c004",
+  "username": "pixel_punk",
+  "amount": 7500
+}
+
+--- BID D (Last Minute Sniper Bid) ---
+{
+  "userId": "cba89e02-4ef8-4921-bcde-572ef910c283",
+  "username": "solo_netrunner",
+  "amount": 10000
+}

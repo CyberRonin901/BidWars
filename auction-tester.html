@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BidWars — Centralized Endpoint Tester</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- SockJS and STOMP CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #08090f;
+            --card-bg: rgba(16, 17, 30, 0.75);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-purple: #8b5cf6;
+            --accent-purple-glow: rgba(139, 92, 246, 0.4);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-glow: rgba(6, 182, 212, 0.4);
+            --accent-green: #10b981;
+            --accent-green-glow: rgba(16, 185, 129, 0.4);
+            --accent-rose: #f43f5e;
+            --accent-rose-glow: rgba(244, 63, 94, 0.4);
+            --accent-amber: #f59e0b;
+            --accent-amber-glow: rgba(245, 158, 11, 0.4);
+            --font-main: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.12) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-x: hidden;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--card-border);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo-section h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a78bfa 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-section p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .config-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .config-bar label {
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-cyan);
+        }
+
+        .config-bar input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            width: 240px;
+            transition: all 0.3s ease;
+        }
+
+        .config-bar input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan-glow);
+        }
+
+        /* Preset Injection Panel */
+        .injector-panel {
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .injector-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #c084fc;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .injector-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .injector-select {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+            color: var(--text-primary);
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .injector-select:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 8px var(--accent-purple-glow);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 1.5rem;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+        }
+
+        .glass-card.ws-card::before {
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+        }
+
+        .glass-card.console-card::before {
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-rose));
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.75rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title span.icon {
+            font-size: 1.4rem;
+        }
+
+        .tab-buttons {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            padding: 0.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            font-family: var(--font-main);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-purple);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px var(--accent-purple-glow);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        input, textarea, select {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 0.65rem 0.85rem;
+            font-family: var(--font-main);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 10px var(--accent-purple-glow);
+        }
+
+        .ws-card input:focus, .ws-card select:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan-glow);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, #6d28d9 100%);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px var(--accent-purple-glow);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--accent-purple-glow);
+            filter: brightness(1.1);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.btn-cyan {
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, #0891b2 100%);
+            box-shadow: 0 4px 12px var(--accent-cyan-glow);
+        }
+
+        .btn.btn-cyan:hover {
+            box-shadow: 0 6px 20px var(--accent-cyan-glow);
+        }
+
+        .btn.btn-rose {
+            background: linear-gradient(135deg, var(--accent-rose) 0%, #be123c 100%);
+            box-shadow: 0 4px 12px var(--accent-rose-glow);
+        }
+
+        .btn.btn-rose:hover {
+            box-shadow: 0 6px 20px var(--accent-rose-glow);
+        }
+
+        .btn.btn-green {
+            background: linear-gradient(135deg, var(--accent-green) 0%, #047857 100%);
+            box-shadow: 0 4px 12px var(--accent-green-glow);
+        }
+
+        .btn.btn-green:hover {
+            box-shadow: 0 6px 20px var(--accent-green-glow);
+        }
+
+        .btn:disabled {
+            background: #27272a !important;
+            box-shadow: none !important;
+            color: #71717a !important;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--card-border);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-disconnected {
+            color: var(--accent-rose);
+            border-color: rgba(244, 63, 94, 0.2);
+        }
+        .status-disconnected .status-dot {
+            background: var(--accent-rose);
+            box-shadow: 0 0 8px var(--accent-rose);
+        }
+
+        .status-connecting {
+            color: var(--accent-amber);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+        .status-connecting .status-dot {
+            background: var(--accent-amber);
+            box-shadow: 0 0 8px var(--accent-amber);
+            animation: pulse 1s infinite alternate;
+        }
+
+        .status-connected {
+            color: var(--accent-green);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+        .status-connected .status-dot {
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Action Buttons Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .action-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--card-border);
+            padding: 0.75rem;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .action-card:hover {
+            border-color: rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.01);
+        }
+
+        .action-card .label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* WebSocket Bid Board */
+        .bid-timeline {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 1rem;
+            flex-grow: 1;
+            min-height: 180px;
+            max-height: 230px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .empty-timeline {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: center;
+            margin: auto;
+            font-style: italic;
+        }
+
+        .bid-item {
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 3px solid var(--accent-cyan);
+            border-radius: 0 6px 6px 0;
+            padding: 0.6rem 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .bid-item.highest {
+            border-left-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .bid-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .bid-user {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .bid-time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        .bid-amount {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.1);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            border: 1px solid rgba(6, 182, 212, 0.15);
+        }
+
+        .bid-item.highest .bid-amount {
+            color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+        }
+
+        /* Console Log Styles */
+        .console-container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            height: 100%;
+        }
+
+        .console-log {
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: #10b981;
+            overflow-y: auto;
+            flex-grow: 1;
+            height: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .console-entry {
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
+            line-height: 1.4;
+        }
+
+        .console-time {
+            color: var(--text-secondary);
+            margin-right: 0.5rem;
+        }
+
+        .console-type {
+            font-weight: 700;
+            margin-right: 0.5rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .console-type.rest-in {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+            border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+
+        .console-type.rest-out {
+            background: rgba(6, 182, 212, 0.15);
+            color: #22d3ee;
+            border: 1px solid rgba(6, 182, 212, 0.25);
+        }
+
+        .console-type.ws-in {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .console-type.ws-out {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        .console-type.sys {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .console-type.err {
+            background: rgba(244, 63, 94, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(244, 63, 94, 0.25);
+        }
+
+        .console-body {
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 0.25rem;
+            color: #e4e4e7;
+        }
+
+        .console-header-row {
+            display: flex;
+            align-items: center;
+        }
+
+        .console-header-btn {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 0.35rem 0.75rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .console-header-btn:hover {
+            color: var(--text-primary);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* Tabs */
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .info-strip {
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            border-radius: 8px;
+            padding: 0.65rem 0.85rem;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #c084fc;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-section">
+            <h1><span class="icon">⚔️</span> BidWars Central Tester</h1>
+            <p>Unified REST API & WebSocket STOMP Endpoint Dashboard</p>
+        </div>
+        
+        <div class="config-bar">
+            <label for="base-url">Service API Host</label>
+            <input type="text" id="base-url" value="http://localhost:8200" placeholder="e.g., http://localhost:8200">
+        </div>
+    </header>
+
+    <!-- QUICK PRESET DUMMY DATA INJECTOR -->
+    <div class="injector-panel">
+        <div class="injector-title">
+            <span>💾</span> <strong>Dummy Data Injector</strong> (Auto-populates testing data from data.txt)
+        </div>
+        <div class="injector-controls">
+            <div>
+                <label for="preset-item-select" style="margin-right: 0.5rem; display: inline-block;">Load Item:</label>
+                <select id="preset-item-select" class="injector-select" onchange="injectItemPreset()">
+                    <option value="">-- Choose Item --</option>
+                    <option value="cybernetic-arm">Legendary Cybernetic Arm ($5,000)</option>
+                    <option value="neural-visor">Retro VR Neural Visor ($2,200)</option>
+                    <option value="hoverboard">Stealth Carbon Hoverboard ($12,500)</option>
+                    <option value="neon-jacket">Vintage Cyberpunk Neon Jacket ($15,000)</option>
+                </select>
+            </div>
+            <div>
+                <label for="preset-bidder-select" style="margin-right: 0.5rem; display: inline-block;">Load Bidder:</label>
+                <select id="preset-bidder-select" class="injector-select" onchange="injectBidderPreset()">
+                    <option value="">-- Choose Bidder --</option>
+                    <option value="ronin">cyber_ronin (Bidder 1)</option>
+                    <option value="ghost">glitch_ghost (Bidder 2)</option>
+                    <option value="punk">pixel_punk (Bidder 3)</option>
+                    <option value="netrunner">solo_netrunner (Bidder 4)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        
+        <!-- COLUMN 1: CONTROLLER INTERACTIONS -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <!-- REST OPERATIONS CARD -->
+            <div class="glass-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">⚡</span> REST Controllers API
+                    </div>
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" onclick="switchTab('create')">Create</button>
+                        <button class="tab-btn" onclick="switchTab('actions')">Actions (GET/Cancel)</button>
+                    </div>
+                </div>
+
+                <!-- TAB 1: CREATE AUCTION -->
+                <div id="tab-create" class="tab-content active">
+                    <div class="info-strip">
+                        Creates a new active auction in `AuctionService`. The <strong>Auction ID</strong> generated here will automatically pre-fill the other tabs!
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="create-seller-id">Seller UUID</label>
+                            <input type="text" id="create-seller-id" value="d3b07384-d113-49d3-a5f1-8f533a1e2f42">
+                        </div>
+                        <div class="form-group">
+                            <label for="create-expires-in">Expires In (Seconds)</label>
+                            <input type="number" id="create-expires-in" value="3600">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="create-item-name">Item Name</label>
+                            <input type="text" id="create-item-name" value="Legendary Cybernetic Arm">
+                        </div>
+                        <div class="form-group">
+                            <label for="create-starting-amount">Starting Bid ($)</label>
+                            <input type="number" id="create-starting-amount" value="5000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="create-item-description">Item Description</label>
+                        <textarea id="create-item-description">Slightly used cybernetic arm with chrome finish, integrated grappler hook, and high-torque servomotors. Fits standard shoulder socket.</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="create-image-url">Item Image URL</label>
+                        <input type="text" id="create-image-url" value="https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=600">
+                    </div>
+
+                    <button class="btn" onclick="createAuction()">
+                        🚀 Create Auction (POST)
+                    </button>
+                </div>
+
+                <!-- TAB 2: GENERAL ACTIONS -->
+                <div id="tab-actions" class="tab-content">
+                    <div class="info-strip" style="background: rgba(6, 182, 212, 0.08); border-color: rgba(6, 182, 212, 0.15); color: #22d3ee;">
+                        Perform standard REST operations. Fill in the **Target Auction ID** manually or use the auto-populated one from the "Create" tab.
+                    </div>
+
+                    <div class="form-group">
+                        <label for="target-auction-id">Target Auction UUID</label>
+                        <input type="text" id="target-auction-id" value="" placeholder="Enter or paste Auction UUID">
+                    </div>
+
+                    <div class="actions-grid">
+                        <div class="action-card">
+                            <div class="label">Auction Details</div>
+                            <button class="btn btn-cyan" onclick="getAuctionById()">Get Profile</button>
+                        </div>
+                        <div class="action-card">
+                            <div class="label">Query Active</div>
+                            <button class="btn btn-cyan" onclick="getAllActive()">Get All Active</button>
+                        </div>
+                        <div class="action-card">
+                            <div class="label">Feign: Seller</div>
+                            <button class="btn btn-cyan" onclick="getSellerDetails()">Seller Dets</button>
+                        </div>
+                        <div class="action-card">
+                            <div class="label">Feign: Top Bidder</div>
+                            <button class="btn btn-cyan" onclick="getHighestBidderDetails()">Top Bidder</button>
+                        </div>
+                    </div>
+                    
+                    <div class="action-card" style="margin-top: 0.5rem; border-color: rgba(244,63,94,0.2); background: rgba(244,63,94,0.03);">
+                        <div class="label" style="color: var(--accent-rose);">Administrative Controls</div>
+                        <button class="btn btn-rose" onclick="cancelAuction()">⚠️ Cancel Auction</button>
+                    </div>
+                </div>
+
+                <!-- Dedicated REST Result/Response Pane in the Card -->
+                <div id="rest-result-pane" style="margin-top: 1.2rem; padding: 1rem; border-radius: 8px; border: 1px solid var(--card-border); background: rgba(0,0,0,0.35); display: none; flex-direction: column; gap: 0.6rem; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-purple);" id="rest-result-title">Response</span>
+                        <span id="rest-result-status" style="font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px;"></span>
+                    </div>
+                    <pre id="rest-result-body" style="font-family: var(--font-mono); font-size: 0.85rem; color: #e4e4e7; white-space: pre-wrap; word-break: break-all; max-height: 180px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 0.55rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03);"></pre>
+                </div>
+
+            </div>
+
+            <!-- WEBSOCKET BIDDING CARD -->
+            <div class="glass-card ws-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🔌</span> WebSocket (STOMP) Bidding Room
+                    </div>
+                    <div class="status-badge status-disconnected" id="ws-status">
+                        <span class="status-dot"></span>
+                        <span id="ws-status-text">Disconnected</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ws-auction-id">Current Bidding Auction UUID</label>
+                        <input type="text" id="ws-auction-id" placeholder="Paste Auction UUID to connect to WebSocket">
+                    </div>
+                    <div class="form-group" style="justify-content: flex-end;">
+                        <div class="form-row" style="grid-template-columns: 1fr 1fr;">
+                            <button class="btn btn-cyan" id="btn-ws-connect" onclick="connectWebSocket()">Connect</button>
+                            <button class="btn btn-rose" id="btn-ws-disconnect" onclick="disconnectWebSocket()" disabled>Disconnect</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label>Real-Time Bid Timeline (/topic/auction/{auctionId})</label>
+                    <div class="bid-timeline" id="bid-timeline">
+                        <div class="empty-timeline">Connect to STOMP and subscribe to start tracking bids.</div>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="label" style="color: var(--accent-cyan);">Submit STOMP Bid Event (/app/place-bid/{auctionId})</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bid-user-id">Bidder User UUID</label>
+                            <input type="text" id="bid-user-id" value="7b6e92c4-3a21-4f1a-bd3f-723a10e4a9bc">
+                        </div>
+                        <div class="form-group">
+                            <label for="bid-username">Username</label>
+                            <input type="text" id="bid-username" value="cyber_ronin">
+                        </div>
+                    </div>
+                    <div class="form-row" style="grid-template-columns: 1.5fr 1fr;">
+                        <div class="form-group">
+                            <label for="bid-amount">Bid Amount ($)</label>
+                            <input type="number" id="bid-amount" value="5500">
+                        </div>
+                        <div class="form-group" style="justify-content: flex-end;">
+                            <button class="btn btn-green" id="btn-send-bid" onclick="placeBid()" disabled>
+                                🎯 Place Bid
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLUMN 2: CONSOLE LOGGER -->
+        <div class="glass-card console-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span class="icon">🖥️</span> Traffic Console Logger
+                </div>
+                <button class="console-header-btn" onclick="clearConsole()">Clear Logs</button>
+            </div>
+
+            <div class="console-container">
+                <div class="console-log" id="console-log">
+                    <div class="console-entry">
+                        <div class="console-header-row">
+                            <span class="console-time">[00:00:00]</span>
+                            <span class="console-type sys">System</span>
+                            <span>Console Initialized. Set up host, load dummy data, and click endpoints.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Predefined Dummy Data Presets (Matching data.txt)
+        const itemPresets = {
+            'cybernetic-arm': {
+                sellerId: 'd3b07384-d113-49d3-a5f1-8f533a1e2f42',
+                expiresIn: 3600,
+                itemName: 'Legendary Cybernetic Arm',
+                itemDescription: 'Slightly used cybernetic arm with chrome finish, integrated grappler hook, and high-torque servomotors. Fits standard shoulder socket.',
+                itemImageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=600',
+                startingAmount: 5000
+            },
+            'neural-visor': {
+                sellerId: 'a1208945-b456-4edc-b6f8-9a3d421e78fc',
+                expiresIn: 1800,
+                itemName: 'Retro VR Neural Visor',
+                itemDescription: 'Circa 2095 retro VR glasses. Retrofitted with direct neural-link interfaces and dynamic spatial audio nodes. Minor scratches on visual visor.',
+                itemImageUrl: 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?q=80&w=600',
+                startingAmount: 2200
+            },
+            'hoverboard': {
+                sellerId: '9fe456a2-cb3d-4781-8bfe-30eefbc87d1a',
+                expiresIn: 7200,
+                itemName: 'Stealth Carbon Hoverboard',
+                itemDescription: 'Military-grade carbon fiber body hoverboard. Ultra quiet repulsor-coils, active optical camouflage skin, and high capacity graphene battery pack.',
+                itemImageUrl: 'https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?q=80&w=600',
+                startingAmount: 12500
+            },
+            'neon-jacket': {
+                sellerId: 'd3b07384-d113-49d3-a5f1-8f533a1e2f42',
+                expiresIn: 86400,
+                itemName: 'Vintage Cyberpunk Neon Jacket',
+                itemDescription: 'A rare collector\'s jacket with integrated programmable LED arrays and neon active piping in excellent condition.',
+                itemImageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=600',
+                startingAmount: 15000
+            }
+        };
+
+        const bidderPresets = {
+            'ronin': {
+                userId: '7b6e92c4-3a21-4f1a-bd3f-723a10e4a9bc',
+                username: 'cyber_ronin'
+            },
+            'ghost': {
+                userId: 'f0f09a8b-7123-4bde-8f8f-b98cc761a293',
+                username: 'glitch_ghost'
+            },
+            'punk': {
+                userId: '23098f92-da8e-4a62-83b1-e2837bc2c004',
+                username: 'pixel_punk'
+            },
+            'netrunner': {
+                userId: 'cba89e02-4ef8-4921-bcde-572ef910c283',
+                username: 'solo_netrunner'
+            }
+        };
+
+        // Injecting Item Preset into Forms
+        function injectItemPreset() {
+            const select = document.getElementById('preset-item-select');
+            const key = select.value;
+            if (!key || !itemPresets[key]) return;
+
+            const item = itemPresets[key];
+            document.getElementById('create-seller-id').value = item.sellerId;
+            document.getElementById('create-expires-in').value = item.expiresIn;
+            document.getElementById('create-item-name').value = item.itemName;
+            document.getElementById('create-starting-amount').value = item.startingAmount;
+            document.getElementById('create-item-description').value = item.itemDescription;
+            document.getElementById('create-image-url').value = item.itemImageUrl;
+
+            // Update Bidder suggest value based on starting price
+            highestBid = item.startingAmount;
+            document.getElementById('bid-amount').value = Math.ceil(highestBid * 1.1);
+
+            log('System', `Injected Preset Item: ${item.itemName}`);
+        }
+
+        // Injecting Bidder Preset into Forms
+        function injectBidderPreset() {
+            const select = document.getElementById('preset-bidder-select');
+            const key = select.value;
+            if (!key || !bidderPresets[key]) return;
+
+            const bidder = bidderPresets[key];
+            document.getElementById('bid-user-id').value = bidder.userId;
+            document.getElementById('bid-username').value = bidder.username;
+
+            log('System', `Injected Preset Bidder: ${bidder.username}`);
+        }
+
+        // Global State Variables
+        let stompClient = null;
+        let subscribedAuctionId = null;
+        let activeSubscription = null;
+        let highestBid = 0;
+
+        // Switch DTO View Tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            const btnIndex = tabName === 'create' ? 0 : 1;
+            document.querySelectorAll('.tab-btn')[btnIndex].classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // Logger helper
+        function log(type, message, body = null) {
+            const consoleLog = document.getElementById('console-log');
+            const entry = document.createElement('div');
+            entry.className = 'console-entry';
+
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+            let typeClass = 'sys';
+            if (type === 'REST OUT') typeClass = 'rest-out';
+            if (type === 'REST IN') typeClass = 'rest-in';
+            if (type === 'WS OUT') typeClass = 'ws-out';
+            if (type === 'WS IN') typeClass = 'ws-in';
+            if (type === 'ERROR') typeClass = 'err';
+
+            let bodyHtml = '';
+            if (body) {
+                if (typeof body === 'object') {
+                    bodyHtml = `<div class="console-body">${JSON.stringify(body, null, 2)}</div>`;
+                } else {
+                    bodyHtml = `<div class="console-body">${body}</div>`;
+                }
+            }
+
+            entry.innerHTML = `
+                <div class="console-header-row">
+                    <span class="console-time">[${timeStr}]</span>
+                    <span class="console-type ${typeClass}">${type}</span>
+                    <span>${message}</span>
+                </div>
+                ${bodyHtml}
+            `;
+            
+            consoleLog.appendChild(entry);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        }
+
+        function clearConsole() {
+            const consoleLog = document.getElementById('console-log');
+            consoleLog.innerHTML = `
+                <div class="console-entry">
+                    <div class="console-header-row">
+                        <span class="console-time">[${new Date().toLocaleTimeString()}]</span>
+                        <span class="console-type sys">System</span>
+                        <span>Console Cleared.</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- REST API CALLS ---
+
+        function getBaseUrl() {
+            return document.getElementById('base-url').value.trim();
+        }
+
+        async function createAuction() {
+            const url = `${getBaseUrl()}/auction/create`;
+            const payload = {
+                sellerId: document.getElementById('create-seller-id').value,
+                expiresIn: parseInt(document.getElementById('create-expires-in').value),
+                itemName: document.getElementById('create-item-name').value,
+                itemDescription: document.getElementById('create-item-description').value,
+                itemImageUrl: document.getElementById('create-image-url').value,
+                startingAmount: parseInt(document.getElementById('create-starting-amount').value)
+            };
+
+            log('REST OUT', `POST ${url}`, payload);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP Error ${response.status}: ${errorText || response.statusText}`);
+                }
+                
+                const data = await response.json();
+                log('REST IN', `201 Created (Auction Registered)`, data);
+                showPageResult('201 Created', false, data);
+
+                // Auto-fill variables on Dashboard
+                if (data.id) {
+                    document.getElementById('target-auction-id').value = data.id;
+                    document.getElementById('ws-auction-id').value = data.id;
+                    highestBid = data.startingAmount || 0;
+                    document.getElementById('bid-amount').value = Math.ceil(highestBid * 1.1);
+                    log('System', `Auto-populated target Auction IDs with new UUID: ${data.id}`);
+                }
+            } catch (err) {
+                log('ERROR', `Failed to create auction: ${err.message}`);
+                showPageResult('Error', true, err.message);
+            }
+        }
+
+        async function getAuctionById() {
+            const auctionId = document.getElementById('target-auction-id').value.trim();
+            if (!auctionId) {
+                log('ERROR', 'Validation Error: Target Auction UUID is required.');
+                showPageResult('Validation Error', true, 'Target Auction UUID is required.');
+                return;
+            }
+
+            const url = `${getBaseUrl()}/auction/get/${auctionId}`;
+            log('REST OUT', `GET ${url}`);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP Error ${response.status}: ${errorText || response.statusText}`);
+                }
+
+                const data = await response.json();
+                log('REST IN', `200 OK (Auction Details)`, data);
+                showPageResult('200 OK', false, data);
+                
+                if(data.highestBidAmount > 0) {
+                    highestBid = data.highestBidAmount;
+                } else {
+                    highestBid = data.startingAmount;
+                }
+                document.getElementById('bid-amount').value = Math.ceil(highestBid + 500);
+            } catch (err) {
+                log('ERROR', `Failed to get auction: ${err.message}`);
+                showPageResult('Error', true, err.message);
+            }
+        }
+
+        async function getAllActive() {
+            const url = `${getBaseUrl()}/auction/get-all-active`;
+            log('REST OUT', `GET ${url}`);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP Error ${response.status}: ${errorText || response.statusText}`);
+                }
+
+                const data = await response.json();
+                log('REST IN', `200 OK (${data.length} Active Auctions Found)`, data);
+                showPageResult(`200 OK (${data.length} Active)`, false, data);
+            } catch (err) {
+                log('ERROR', `Failed to fetch active auctions: ${err.message}`);
+                showPageResult('Error', true, err.message);
+            }
+        }
+
+        async function cancelAuction() {
+            const auctionId = document.getElementById('target-auction-id').value.trim();
+            if (!auctionId) {
+                log('ERROR', 'Validation Error: Target Auction UUID is required.');
+                showPageResult('Validation Error', true, 'Target Auction UUID is required.');
+                return;
+            }
+
+            const url = `${getBaseUrl()}/auction/cancel/${auctionId}`;
+            log('REST OUT', `GET ${url}`);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP Error ${response.status}: ${errorText || response.statusText}`);
+                }
+
+                const data = await response.text();
+                log('REST IN', `200 OK (Cancel confirmation)`, data);
+                showPageResult('200 OK', false, data);
+            } catch (err) {
+                log('ERROR', `Failed to cancel auction: ${err.message}`);
+                showPageResult('Error', true, err.message);
+            }
+        }
+
+        async function getSellerDetails() {
+            const auctionId = document.getElementById('target-auction-id').value.trim();
+            if (!auctionId) {
+                log('ERROR', 'Validation Error: Target Auction UUID is required.');
+                showPageResult('Validation Error', true, 'Target Auction UUID is required.');
+                return;
+            }
+
+            const url = `${getBaseUrl()}/auction/get-seller-details/${auctionId}`;
+            log('REST OUT', `GET ${url} (Resolving Feign client details)`);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP Error ${response.status}: ${errorText || response.statusText}`);
+                }
+
+                const data = await response.json();
+                log('REST IN', `200 OK (Seller profile retrieved via OpenFeign)`, data);
+                showPageResult('200 OK (OpenFeign)', false, data);
+            } catch (err) {
+                log('ERROR', `Failed to fetch seller details: ${err.message}`);
+                showPageResult('Error', true, err.message);
+            }
+        }
+
+        async function getHighestBidderDetails() {
+            const auctionId = document.getElementById('target-auction-id').value.trim();
+            if (!auctionId) {
+                log('ERROR', 'Validation Error: Target Auction UUID is required.');
+                showPageResult('Validation Error', true, 'Target Auction UUID is required.');
+                return;
+            }
+
+            const url = `${getBaseUrl()}/auction/get-highest-bidder-details/${auctionId}`;
+            log('REST OUT', `GET ${url} (Resolving Feign client details)`);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP Error ${response.status}: ${errorText || response.statusText}`);
+                }
+
+                const data = await response.json();
+                log('REST IN', `200 OK (Highest Bidder profile retrieved via OpenFeign)`, data);
+                showPageResult('200 OK (OpenFeign)', false, data);
+            } catch (err) {
+                log('ERROR', `Failed to fetch bidder details: ${err.message}`);
+                showPageResult('Error', true, err.message);
+            }
+        }
+
+        // --- WEBSOCKET & STOMP METHODS ---
+
+        function updateWsStatus(state) {
+            const badge = document.getElementById('ws-status');
+            const text = document.getElementById('ws-status-text');
+            const btnConnect = document.getElementById('btn-ws-connect');
+            const btnDisconnect = document.getElementById('btn-ws-disconnect');
+            const btnSendBid = document.getElementById('btn-send-bid');
+
+            badge.className = 'status-badge';
+            
+            if (state === 'DISCONNECTED') {
+                badge.classList.add('status-disconnected');
+                text.innerText = 'Disconnected';
+                btnConnect.disabled = false;
+                btnDisconnect.disabled = true;
+                btnSendBid.disabled = true;
+            } else if (state === 'CONNECTING') {
+                badge.classList.add('status-connecting');
+                text.innerText = 'Connecting...';
+                btnConnect.disabled = true;
+                btnDisconnect.disabled = true;
+                btnSendBid.disabled = true;
+            } else if (state === 'CONNECTED') {
+                badge.classList.add('status-connected');
+                text.innerText = `Connected`;
+                btnConnect.disabled = true;
+                btnDisconnect.disabled = false;
+                btnSendBid.disabled = false;
+            }
+        }
+
+        function connectWebSocket() {
+            const auctionId = document.getElementById('ws-auction-id').value.trim();
+            if (!auctionId) {
+                log('ERROR', 'WebSocket Error: Auction UUID required to subscribe.');
+                alert('Please provide or generate an Auction UUID first!');
+                return;
+            }
+
+            updateWsStatus('CONNECTING');
+            subscribedAuctionId = auctionId;
+
+            const socketUrl = `${getBaseUrl()}/ws`;
+            log('System', `Initiating SockJS connection to: ${socketUrl}`);
+
+            try {
+                const socket = new SockJS(socketUrl);
+                stompClient = Stomp.over(socket);
+
+                stompClient.debug = function(str) {
+                    if (str.includes('CONNECT') || str.includes('SUBSCRIBE') || str.includes('DISCONNECT')) {
+                        log('WS OUT', `STOMP Frame: ${str.trim()}`);
+                    }
+                };
+
+                stompClient.connect({}, 
+                    function (frame) {
+                        log('System', `STOMP connection handshake completed.`);
+                        updateWsStatus('CONNECTED');
+
+                        // Clear timeline
+                        const timeline = document.getElementById('bid-timeline');
+                        timeline.innerHTML = '';
+
+                        // Subscribe to /topic/auction/{auctionId}
+                        const subscribeUrl = `/topic/auction/${subscribedAuctionId}`;
+                        log('System', `Subscribed to channel: ${subscribeUrl}`);
+
+                        activeSubscription = stompClient.subscribe(subscribeUrl, function (message) {
+                            const bidEvent = JSON.parse(message.body);
+                            log('WS IN', `Broadcast on ${subscribeUrl}`, bidEvent);
+                            handleIncomingBidEvent(bidEvent);
+                        });
+                    }, 
+                    function (error) {
+                        log('ERROR', `STOMP connection error: ${error}`);
+                        disconnectWebSocket();
+                    }
+                );
+            } catch (err) {
+                log('ERROR', `SockJS initialization failed: ${err.message}`);
+                updateWsStatus('DISCONNECTED');
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (activeSubscription) {
+                log('System', `Unsubscribed from: /topic/auction/${subscribedAuctionId}`);
+                activeSubscription.unsubscribe();
+                activeSubscription = null;
+            }
+
+            if (stompClient !== null) {
+                stompClient.disconnect(function() {
+                    log('System', 'WebSocket connection terminated.');
+                });
+                stompClient = null;
+            }
+
+            subscribedAuctionId = null;
+            updateWsStatus('DISCONNECTED');
+
+            const timeline = document.getElementById('bid-timeline');
+            timeline.innerHTML = `<div class="empty-timeline">Disconnected. Connect to STOMP and subscribe to start tracking bids.</div>`;
+        }
+
+        function placeBid() {
+            if (!stompClient || !subscribedAuctionId) {
+                log('ERROR', 'WebSocket Error: Active STOMP connection is required.');
+                return;
+            }
+
+            const sendUrl = `/app/place-bid/${subscribedAuctionId}`;
+            const bidPayload = {
+                userId: document.getElementById('bid-user-id').value,
+                username: document.getElementById('bid-username').value,
+                amount: parseInt(document.getElementById('bid-amount').value)
+            };
+
+            log('WS OUT', `Publishing STOMP frame to ${sendUrl}`, bidPayload);
+            
+            try {
+                stompClient.send(sendUrl, {}, JSON.stringify(bidPayload));
+                highestBid = Math.max(highestBid, bidPayload.amount);
+                document.getElementById('bid-amount').value = Math.ceil(highestBid + 500);
+            } catch (err) {
+                log('ERROR', `Failed to send bid: ${err.message}`);
+            }
+        }
+
+        function handleIncomingBidEvent(bid) {
+            const timeline = document.getElementById('bid-timeline');
+            
+            const emptyMsg = timeline.querySelector('.empty-timeline');
+            if (emptyMsg) emptyMsg.remove();
+
+            const item = document.createElement('div');
+            item.className = 'bid-item';
+            
+            if (bid.amount >= highestBid) {
+                highestBid = bid.amount;
+                item.className = 'bid-item highest';
+                
+                const bidAmtInput = document.getElementById('bid-amount');
+                bidAmtInput.value = Math.ceil(highestBid + 500);
+                bidAmtInput.style.borderColor = 'var(--accent-green)';
+                setTimeout(() => {
+                    bidAmtInput.style.borderColor = 'var(--card-border)';
+                }, 1000);
+            }
+
+            const formattedTime = new Date().toLocaleTimeString();
+
+            item.innerHTML = `
+                <div class="bid-meta">
+                    <div class="bid-user">👤 ${bid.username || 'Anonymous'} ${item.className.includes('highest') ? '🏆 (Leading)' : ''}</div>
+                    <div class="bid-time">User ID: ${bid.userId} • Recv: ${formattedTime}</div>
+                </div>
+                <div class="bid-amount">$${bid.amount.toLocaleString()}</div>
+            `;
+
+            timeline.insertBefore(item, timeline.firstChild);
+        }
+
+        function showPageResult(statusText, isError, data) {
+            const pane = document.getElementById('rest-result-pane');
+            const statusNode = document.getElementById('rest-result-status');
+            const bodyNode = document.getElementById('rest-result-body');
+            const titleNode = document.getElementById('rest-result-title');
+
+            pane.style.display = 'flex';
+            statusNode.innerText = statusText;
+
+            if (isError) {
+                titleNode.style.color = 'var(--accent-rose)';
+                titleNode.innerText = 'HTTP ERROR';
+                statusNode.style.background = 'rgba(244, 63, 94, 0.15)';
+                statusNode.style.color = '#f87171';
+                statusNode.style.border = '1px solid rgba(244, 63, 94, 0.25)';
+            } else {
+                titleNode.style.color = 'var(--accent-purple)';
+                titleNode.innerText = 'HTTP RESPONSE';
+                statusNode.style.background = 'rgba(16, 185, 129, 0.15)';
+                statusNode.style.color = '#34d399';
+                statusNode.style.border = '1px solid rgba(16, 185, 129, 0.25)';
+            }
+
+            if (data && typeof data === 'object') {
+                bodyNode.innerText = JSON.stringify(data, null, 2);
+            } else if (data) {
+                bodyNode.innerText = data;
+            } else {
+                bodyNode.innerText = '[Empty Response]';
+            }
+        }
+    </script>
+</body>
+</html>

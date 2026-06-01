@@ -15,4 +15,10 @@ public interface AuctionRepo extends JpaRepository<Auction, UUID> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Auction a SET a.status=?2 where a.id=?1")
     int updateStatus(UUID id, AuctionStatus status);
+
+    @Query("SELECT a.sellerId FROM Auction a WHERE a.id=?1")
+    UUID findSellerIdByAuctionId(UUID auctionId);
+
+    @Query("SELECT a.highestBidUserId FROM Auction a where a.id=?1")
+    UUID findHighestBidderIdByAuctionId(UUID auctionId);
 }

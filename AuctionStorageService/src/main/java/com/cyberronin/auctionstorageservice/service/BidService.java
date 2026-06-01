@@ -1,6 +1,7 @@
 package com.cyberronin.auctionstorageservice.service;
 
 import com.cyberronin.auctionstorageservice.dto.BidDTO;
+import com.cyberronin.auctionstorageservice.dto.BidPlacedEventDTO;
 import com.cyberronin.auctionstorageservice.model.Bid;
 import com.cyberronin.auctionstorageservice.repo.BidRepo;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,7 @@ public class BidService {
 
     private final BidRepo bidRepo;
 
-    public void save(BidDTO reqObj) {
+    public void save(BidPlacedEventDTO reqObj) {
         Bid bid = Bid.builder()
                 .id(UUID.randomUUID())
                 .auctionId(reqObj.auctionId())

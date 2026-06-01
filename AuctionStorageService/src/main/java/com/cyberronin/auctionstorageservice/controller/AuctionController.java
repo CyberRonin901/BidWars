@@ -1,8 +1,5 @@
 package com.cyberronin.auctionstorageservice.controller;
 
-import com.cyberronin.auctionstorageservice.dto.AuctionHighestBidUpdateDTO;
-import com.cyberronin.auctionstorageservice.dto.SaveAuctionReqDTO;
-import com.cyberronin.auctionstorageservice.dto.UpdateHighestBidReqDTO;
 import com.cyberronin.auctionstorageservice.model.Auction;
 import com.cyberronin.auctionstorageservice.service.AuctionService;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +22,18 @@ public class AuctionController {
 //    }
 
     @GetMapping("/get/{id}")
-    public ResponseEntity<Auction> getAuctionById(@PathVariable("id") UUID auctionId){
-        Auction auction = auctionService.getAuctionById(auctionId);
-        return ResponseEntity.ok(auction);
+    public Auction getAuctionById(@PathVariable("id") UUID auctionId){
+        return auctionService.getAuctionById(auctionId);
+    }
+
+    @GetMapping("/get/seller-id/{auctionId}")
+    public UUID getSellerId(@PathVariable UUID auctionId){
+        return auctionService.getSellerId(auctionId);
+    }
+
+    @GetMapping("/get/highest-bidder-id/{auctionId}")
+    public UUID getHighestBidderId(@PathVariable UUID auctionId){
+        return auctionService.getHighestBidderId(auctionId);
     }
 
 //    @PostMapping("/updateHighestBid/{id}")

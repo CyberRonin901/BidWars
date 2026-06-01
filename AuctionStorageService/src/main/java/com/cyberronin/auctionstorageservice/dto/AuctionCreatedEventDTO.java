@@ -1,10 +1,9 @@
 package com.cyberronin.auctionstorageservice.dto;
-
 import com.cyberronin.auctionstorageservice.model.AuctionStatus;
 
 import java.util.UUID;
 
-public record SaveAuctionReqDTO(
+public record AuctionCreatedEventDTO(
         UUID id,
 
         long createdAt, // epoch time

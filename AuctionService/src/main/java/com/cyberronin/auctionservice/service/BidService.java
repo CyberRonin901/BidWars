@@ -1,20 +1,20 @@
 package com.cyberronin.auctionservice.service;
 
-import com.cyberronin.auctionservice.dto.AuctionHighestBidUpdateDTO;
+import com.cyberronin.auctionservice.dto.AuctionHighestBidUpdateEventDTO;
 import com.cyberronin.auctionservice.dto.BidDTO;
 import com.cyberronin.auctionservice.dto.BidPlacedEventDTO;
-import com.cyberronin.auctionservice.feign.client.UserServiceInterface;
 import com.cyberronin.auctionservice.producer.RabbitMQProducer;
 import com.cyberronin.auctionservice.repo.AuctionHashRepo;
 import com.cyberronin.auctionservice.repo.BidSortedSetRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.UUID;
 
-@Controller
+@Service
 @RequiredArgsConstructor
 public class BidService {
 
@@ -44,7 +44,7 @@ public class BidService {
             );
 
             rabbitMQProducer.auctionHighestBidUpdate(
-                    new AuctionHighestBidUpdateDTO(
+                    new AuctionHighestBidUpdateEventDTO(
                             auctionId,
                             bidDto.userId(),
                             bidDto.amount(),

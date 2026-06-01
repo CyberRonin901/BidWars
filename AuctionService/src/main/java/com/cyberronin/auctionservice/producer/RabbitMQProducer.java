@@ -1,10 +1,6 @@
 package com.cyberronin.auctionservice.producer;
 
-import com.cyberronin.auctionservice.dto.AuctionHighestBidUpdateDTO;
-import com.cyberronin.auctionservice.dto.AuctionStatusUpdateDTO;
-import com.cyberronin.auctionservice.dto.BidDTO;
-import com.cyberronin.auctionservice.dto.BidPlacedEventDTO;
-import com.cyberronin.auctionservice.model.Auction;
+import com.cyberronin.auctionservice.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +40,7 @@ public class RabbitMQProducer
     private final RabbitTemplate rabbitTemplate;
     private static final Logger LOGGER = LoggerFactory.getLogger(RabbitMQProducer.class);
 
-    public void auctionCreation(Auction auction)
+    public void auctionCreation(AuctionCreatedEventDTO auction)
     {
         LOGGER.info("Auction Created Event -> {}", auction);
 
@@ -67,13 +63,13 @@ public class RabbitMQProducer
                 auctionExpireRoutingKey,
                 auctionId,
                 message -> {
-                    message.getMessageProperties().setDelayLong(ttl);
+                    message.getMessageProperties().setHeader("x-delay", ttl);
                     return message;
                     }
                 );
     }
 
-    public void auctionStatusUpdate(AuctionStatusUpdateDTO auctionStatusDTO)
+    public void auctionStatusUpdate(AuctionStatusUpdateEventDTO auctionStatusDTO)
     {
         LOGGER.info("Auction Status Update Event -> {}", auctionStatusDTO);
 
@@ -84,7 +80,7 @@ public class RabbitMQProducer
         );
     }
 
-    public void auctionHighestBidUpdate(AuctionHighestBidUpdateDTO auctionUpdateDto)
+    public void auctionHighestBidUpdate(AuctionHighestBidUpdateEventDTO auctionUpdateDto)
     {
         LOGGER.info("Auction Highest Bid Update Event -> {}", auctionUpdateDto);
 

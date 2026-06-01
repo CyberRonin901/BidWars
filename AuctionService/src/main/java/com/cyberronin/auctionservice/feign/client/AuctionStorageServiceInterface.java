@@ -5,6 +5,7 @@ import com.cyberronin.auctionservice.feign.dto.UpdateHighestBidReqDTO;
 import com.cyberronin.auctionservice.model.Auction;
 import com.cyberronin.auctionservice.model.Bid;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,12 @@ public interface AuctionStorageServiceInterface {
 
     @GetMapping("/auction/get/{id}")
     AuctionResponseDTO getAuctionById(@PathVariable("id") UUID auctionId);
+
+    @GetMapping("/get/seller-id/{auctionId}")
+    UUID getSellerId(@PathVariable UUID auctionId);
+
+    @GetMapping("/get/highest-bidder-id/{auctionId}")
+    UUID getHighestBidderId(@PathVariable UUID auctionId);
 
     @PostMapping("/auction/updateHighestBid/{id}")
     Void updateHighestBid(@PathVariable("id") UUID auctionId, @RequestBody UpdateHighestBidReqDTO reqObj);

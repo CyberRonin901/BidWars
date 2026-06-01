@@ -4,7 +4,7 @@ import com.cyberronin.auctionservice.model.AuctionStatus;
 
 import java.util.UUID;
 
-public record AuctionStatusUpdateDTO(
+public record AuctionStatusUpdateEventDTO(
         UUID id,
         AuctionStatus status
 ) {}

@@ -1,8 +1,7 @@
 package com.cyberronin.auctionstorageservice.service;
 
-import com.cyberronin.auctionstorageservice.dto.AuctionHighestBidUpdateDTO;
-import com.cyberronin.auctionstorageservice.dto.SaveAuctionReqDTO;
-import com.cyberronin.auctionstorageservice.dto.UpdateHighestBidReqDTO;
+import com.cyberronin.auctionstorageservice.dto.AuctionCreatedEventDTO;
+import com.cyberronin.auctionstorageservice.dto.AuctionHighestBidUpdateEventDTO;
 import com.cyberronin.auctionstorageservice.model.Auction;
 import com.cyberronin.auctionstorageservice.model.AuctionStatus;
 import com.cyberronin.auctionstorageservice.repo.AuctionRepo;
@@ -18,7 +17,7 @@ public class AuctionService {
 
     private final AuctionRepo auctionRepo;
 
-    public void save(SaveAuctionReqDTO reqObj) {
+    public void save(AuctionCreatedEventDTO reqObj) {
         Auction auction = Auction.builder()
                 .id(reqObj.id())
                 .createdAt(reqObj.createdAt())
@@ -38,7 +37,7 @@ public class AuctionService {
         return auctionRepo.findById(auctionId).orElse(null);
     }
 
-    public void updateHighestBid(AuctionHighestBidUpdateDTO dto)
+    public void updateHighestBid(AuctionHighestBidUpdateEventDTO dto)
     {
         Auction existingAuction = auctionRepo.findById(dto.id())
                 .orElseThrow(() -> new RuntimeException("Auction not found with ID: " + dto.id()));
@@ -53,5 +52,13 @@ public class AuctionService {
     @Transactional
     public void updateStatus(UUID id, AuctionStatus status) {
         auctionRepo.updateStatus(id, status);
+    }
+
+    public UUID getSellerId(UUID auctionId) {
+        return auctionRepo.findSellerIdByAuctionId(auctionId);
+    }
+
+    public UUID getHighestBidderId(UUID auctionId) {
+        return auctionRepo.findHighestBidderIdByAuctionId(auctionId);
     }
 }
