@@ -15,6 +15,7 @@ import com.cyberronin.auctionservice.util.AuctionMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,9 @@ public class AuctionService
     private final RabbitMQProducer rabbitMQProducer;
     private final SimpMessagingTemplate messagingTemplate;
 
+    @Value("${websocket.destination}")
+    private static String WEBSOCKET_DESTINATION;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuctionService.class);
 
     private final UserServiceInterface userServiceInterface;
@@ -41,7 +45,8 @@ public class AuctionService
          UserResponseDTO sellerDetails = userServiceInterface.getUserDetails(reqObj.sellerId());
 
         long now = Instant.now().toEpochMilli();
-        long expiresAt = reqObj.expiresIn() * 1000 + now;
+        long ttl = reqObj.expiresIn() * 1000;
+        long expiresAt = ttl + now;
 
          Auction auction = Auction.builder()
                  .id(UUID.randomUUID())
@@ -58,8 +63,6 @@ public class AuctionService
                  .build();
 
         Map<String, String> auctionMap = AuctionMapper.toMap(auction);
-
-        long ttl = reqObj.expiresIn() * 1000;
 
         auctionRepo.save(auction.getId(), auctionMap, ttl);
         bidRepo.setExpiry(auction.getId(), ttl);
@@ -131,7 +134,7 @@ public class AuctionService
         auctionRepo.updateStatus(id, AuctionStatus.CANCELLED);
         activeAuctionsRepo.removeAuction(id);
 
-        String destination = "/topic/auction/" + id;
+        String destination = WEBSOCKET_DESTINATION + id;
         try {
             var auctionStatusDTO = new AuctionStatusUpdateEventDTO(id, AuctionStatus.ENDED);
             messagingTemplate.convertAndSend(destination, auctionStatusDTO);

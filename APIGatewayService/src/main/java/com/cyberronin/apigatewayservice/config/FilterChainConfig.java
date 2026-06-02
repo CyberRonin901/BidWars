@@ -42,38 +42,36 @@ public class FilterChainConfig {
     @Bean
     public RouteLocator serviceA_Route(RouteLocatorBuilder builder) {
         return builder.routes()
-                .route("SERVICE-A", r -> r
-                        .path("/demo/**")
-                        .filters(f -> f
-                                // Rewrite Path to strip /demo and convert ex. /demo/hello to /hello and send to Service-A
-                                .rewritePath("/demo/(?<segment>.*)", "/${segment}")
+            .route("AUCTION-SERVICE", r -> r
+                    .path("/auction/**")
+                    .filters(f -> f
 
-//                                 Authentication
-                                .filter(authFilter.apply(new AuthenticationFilter.Config()))
-//                                 Authorization
-                                .filter(roleFilter.apply(config -> config.setRequiredRole("ROLE_USER")))
+//                          Authentication
+                            .filter(authFilter.apply(new AuthenticationFilter.Config()))
+//                          Authorization
+                            .filter(roleFilter.apply(config -> config.setRequiredRole("ROLE_USER")))
 
-//                                 Rate Limiting
-//                                .requestRateLimiter(config -> config
-//                                        .setRateLimiter(redisRateLimiter)
-//                                        .setKeyResolver(perJWTKeyResolver))
+//                          Rate Limiting
+//                            .requestRateLimiter(config -> config
+//                                .setRateLimiter(redisRateLimiter)
+//                                .setKeyResolver(perJWTKeyResolver))
 
-                                // Retry (exponential retry + jitter)
-                                .retry(retryConfig -> retryConfig
-                                        .setRetries(3)
-                                        .setMethods(HttpMethod.GET, HttpMethod.PUT)
-                                        .setStatuses(HttpStatus.BAD_GATEWAY, HttpStatus.SERVICE_UNAVAILABLE, HttpStatus.GATEWAY_TIMEOUT)
-                                        // param order: firstBackoff, maxBackoff, factor, basedOnPreviousDelay
-                                        .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true)
-                                )
+//                          Retry (exponential retry + jitter)
+                            .retry(retryConfig -> retryConfig
+                                .setRetries(3)
+                                .setMethods(HttpMethod.GET, HttpMethod.PUT)
+                                .setStatuses(HttpStatus.BAD_GATEWAY, HttpStatus.SERVICE_UNAVAILABLE, HttpStatus.GATEWAY_TIMEOUT)
+                                // param order: firstBackoff, maxBackoff, factor, basedOnPreviousDelay
+                                .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true)
+                            )
 
-                                // Circuit Breaker
-                                .circuitBreaker(cbConfig -> cbConfig
-                                        .setName("CIRCUIT-BREAKER")
-                                        .setFallbackUri("forward:/fallback/message"))
-                        )
-                        .uri("lb://SERVICE-A")
-                )
-                .build();
+                            // Circuit Breaker
+                            .circuitBreaker(cbConfig -> cbConfig
+                                .setName("CIRCUIT-BREAKER")
+                                .setFallbackUri("forward:/fallback/message"))
+                    )
+                    .uri("lb://AUCTION-SERVICE")
+            )
+            .build();
     }
 }

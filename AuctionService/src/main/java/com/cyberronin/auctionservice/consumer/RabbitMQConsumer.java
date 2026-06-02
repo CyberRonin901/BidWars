@@ -24,6 +24,9 @@ public class RabbitMQConsumer {
     private final RabbitTemplate rabbitTemplate;
     private final SimpMessagingTemplate messagingTemplate;
 
+    @Value("${websocket.destination}")
+    private static String WEBSOCKET_DESTINATION;
+
     @Value("${rabbitmq.exchange.name}")
     private String exchangeName;
 
@@ -47,7 +50,7 @@ public class RabbitMQConsumer {
         var auctionStatusDTO = new AuctionStatusUpdateEventDTO(id, AuctionStatus.ENDED);
         LOGGER.info("Auction Status Update Event -> {}", auctionStatusDTO);
 
-        String destination = "/topic/auction/" + id;
+        String destination = WEBSOCKET_DESTINATION + id;
         try {
             messagingTemplate.convertAndSend(destination, auctionStatusDTO);
         } catch (Exception e) {

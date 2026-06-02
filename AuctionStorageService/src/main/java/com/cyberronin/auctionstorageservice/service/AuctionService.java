@@ -17,6 +17,7 @@ public class AuctionService {
 
     private final AuctionRepo auctionRepo;
 
+    @Transactional
     public void save(AuctionCreatedEventDTO reqObj) {
         Auction auction = Auction.builder()
                 .id(reqObj.id())
@@ -37,16 +38,15 @@ public class AuctionService {
         return auctionRepo.findById(auctionId).orElse(null);
     }
 
+    @Transactional
     public void updateHighestBid(AuctionHighestBidUpdateEventDTO dto)
     {
-        Auction existingAuction = auctionRepo.findById(dto.id())
-                .orElseThrow(() -> new RuntimeException("Auction not found with ID: " + dto.id()));
-
-        existingAuction.setHighestBidAmount(dto.highestBidAmount());
-        existingAuction.setHighestBidUserId(dto.highestBidUserId());
-        existingAuction.setHighestBidTimestamp(dto.highestBidTimestamp());
-
-        auctionRepo.save(existingAuction);
+        auctionRepo.updateHighestBidderDetailsByAuctionId(
+                dto.id(),
+                dto.highestBidUserId(),
+                dto.highestBidTimestamp(),
+                dto.highestBidTimestamp()
+        );
     }
 
     @Transactional

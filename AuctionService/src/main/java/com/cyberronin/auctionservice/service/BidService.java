@@ -7,6 +7,7 @@ import com.cyberronin.auctionservice.producer.RabbitMQProducer;
 import com.cyberronin.auctionservice.repo.AuctionHashRepo;
 import com.cyberronin.auctionservice.repo.BidSortedSetRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,9 @@ public class BidService {
     private final SimpMessagingTemplate messagingTemplate;
     private final RabbitMQProducer rabbitMQProducer;
 
+    @Value("${websocket.destination}")
+    private static String WEBSOCKET_DESTINATION;
+
     public void processAndBroadcastBid(UUID auctionId, BidDTO bidDto)
     {
         long timestamp = Instant.now().toEpochMilli();
@@ -31,7 +35,7 @@ public class BidService {
 
 //         Broadcast if and only if the Lua script confirmed it was valid and successful
         if (isHighestBid) {
-            String destination = "/topic/auction/" + auctionId;
+            String destination = WEBSOCKET_DESTINATION + auctionId;
             messagingTemplate.convertAndSend(destination, bidDto);
 
             rabbitMQProducer.bidPlaced(

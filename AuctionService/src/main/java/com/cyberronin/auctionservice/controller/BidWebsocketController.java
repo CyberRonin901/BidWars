@@ -6,11 +6,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/auction")
 public class BidWebsocketController {
 
     // Connect to http://_____/ws
