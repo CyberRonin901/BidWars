@@ -1,153 +1,332 @@
 services:
-  postgres:
-    image: postgres:17-alpine
-    container_name: api-gateway-postgres
-    environment:
-      POSTGRES_DB: AuthServiceDB
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./AuthService/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d AuthServiceDB"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - api-gateway-network
+  # POSTGRES -----------------------------------------------------------------------
 
-  redis:
-    image: redis:7-alpine
-    container_name: api-gateway-redis
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+  user-postgres:
+    image: postgres:17-alpine
+    container_name: user-postgres
+
+    environment:
+      POSTGRES_DB: UserDB
+      POSTGRES_USER: ${USER_DB_USERNAME}
+      POSTGRES_PASSWORD: ${USER_DB_PASSWORD}
+
+    volumes:
+      - user_postgres_data:/var/lib/postgresql/data
+
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD-SHELL", "pg_isready -U ${USER_DB_USERNAME} -d UserDB"]
       interval: 10s
       timeout: 5s
       retries: 5
+
     networks:
-      - api-gateway-network
+      - bidwars-network
+
+  auction-postgres:
+    image: postgres:17-alpine
+    container_name: auction-postgres
+
+    environment:
+      POSTGRES_DB: AuctionStorageDB
+      POSTGRES_USER: ${AUCTION_DB_USERNAME}
+      POSTGRES_PASSWORD: ${AUCTION_DB_PASSWORD}
+
+    volumes:
+      - auction_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUCTION_DB_USERNAME} -d AuctionStorageDB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - bidwars-network
+
+  # REDIS -----------------------------------------------------------------------
+
+  auction-redis:
+    image: redis:7-alpine
+    container_name: auction-redis
+    command: redis-server --requirepass ${AUCTION_REDIS_PASSWORD}
+
+    volumes:
+      - auction_redis_data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${AUCTION_REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - bidwars-network
+
+  rate-limit-redis:
+    image: redis:7-alpine
+    container_name: rate-limit-redis
+    command: redis-server --requirepass ${RATE_LIMIT_REDIS_PASSWORD}
+
+    volumes:
+      - rate_limit_redis_data:/data
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${RATE_LIMIT_REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - bidwars-network
+
+  # RABBITMQ -----------------------------------------------------------------------
+
+  rabbitmq:
+    build:
+      context: ./RabbitMQ
+      dockerfile: Dockerfile
+
+    container_name: rabbitmq
+
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_logs:/var/log/rabbitmq
+
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+    networks:
+      - bidwars-network
+
+  # DISCOVERY -----------------------------------------------------------------------
 
   discovery-service:
     build:
       context: .
       args:
         SERVICE_PATH: ./EurekaDiscoveryService
-    container_name: discovery-service
-    environment:
-      - SERVER_PORT=${SERVER_PORT_DISCOVERY}
-      - SPRING_APPLICATION_NAME=discovery-service
-      - EUREKA_INSTANCE_HOSTNAME=discovery-service
-      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://discovery-service:${SERVER_PORT_DISCOVERY}/eureka/
 
-      # standalone server mode
-      - EUREKA_CLIENT_FETCH_REGISTRY=false
-      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
-      - EUREKA_SERVER_ENABLE_SELF_PRESERVATION=false
+    container_name: discovery-service
+
+    environment:
+      EUREKA_SERVICE_PORT: 8761
+      EUREKA_HOSTNAME: discovery-service
 
     ports:
-      - "${SERVER_PORT_DISCOVERY}:${SERVER_PORT_DISCOVERY}"
+      - "${EUREKA_SERVICE_PORT}:8761"
+
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:${SERVER_PORT_DISCOVERY}/eureka/apps || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8761/actuator/health | grep UP || exit 1"
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
 
     networks:
-      - api-gateway-network
+      - bidwars-network
 
-  auth-service:
+  # USER SERVICE -----------------------------------------------------------------------
+
+  user-service:
     build:
       context: .
       args:
-        SERVICE_PATH: ./AuthService
-    container_name: auth-service
+        SERVICE_PATH: ./UserService
+
+    container_name: user-service
+
     environment:
-      - SERVER_PORT=${SERVER_PORT_AUTH}
-      - SPRING_APPLICATION_NAME=auth-service
-      - SPRING_R2DBC_URL=r2dbc:postgresql://api-gateway-postgres:5432/AuthServiceDB
-      - SPRING_R2DBC_USERNAME=${DB_USERNAME}
-      - SPRING_R2DBC_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRATION=${JWT_EXPIRATION}
-      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://discovery-service:${SERVER_PORT_DISCOVERY}/eureka/
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      USER_SERVICE_PORT: ${USER_SERVICE_PORT}
+      USER_DB_HOST: user-postgres
+      USER_DB_PORT: 5432
+      USER_DB_NAME: UserDB
+      USER_DB_USERNAME: ${USER_DB_USERNAME}
+      USER_DB_PASSWORD: ${USER_DB_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+
+      EUREKA_URL: http://discovery-service:8761/eureka/
+
+    ports:
+      - "${USER_SERVICE_PORT}:${USER_SERVICE_PORT}"
 
     depends_on:
-      postgres:
+      user-postgres:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
 
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:${SERVER_PORT_AUTH}/actuator/health || exit 1"]
-      interval: 20s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
+    networks:
+      - bidwars-network
+
+  # AUCTION SERVICE -----------------------------------------------------------------------
+
+  auction-service:
+    build:
+      context: .
+      args:
+        SERVICE_PATH: ./AuctionService
+
+    container_name: auction-service
+
+    environment:
+      AUCTION_SERVICE_PORT: ${AUCTION_SERVICE_PORT}
+
+      AUCTION_REDIS_HOST: auction-redis
+      AUCTION_REDIS_PORT: 6379
+      AUCTION_REDIS_USERNAME: default
+      AUCTION_REDIS_PASSWORD: ${AUCTION_REDIS_PASSWORD}
+
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+
+      EUREKA_URL: http://discovery-service:8761/eureka/
+
+    ports:
+      - "${AUCTION_SERVICE_PORT}:${AUCTION_SERVICE_PORT}"
+
+    depends_on:
+      auction-redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
 
     networks:
-      - api-gateway-network
+      - bidwars-network
+
+  # AUCTION STORAGE SERVICE -----------------------------------------------------------------------
+
+  auction-storage-service:
+    build:
+      context: .
+      args:
+        SERVICE_PATH: ./AuctionStorageService
+
+    container_name: auction-storage-service
+
+    environment:
+      AUCTION_STORAGE_SERVICE_PORT: ${AUCTION_STORAGE_SERVICE_PORT}
+
+      AUCTION_DB_HOST: auction-postgres
+      AUCTION_DB_PORT: 5432
+      AUCTION_DB_NAME: AuctionStorageDB
+      AUCTION_DB_USERNAME: ${AUCTION_DB_USERNAME}
+      AUCTION_DB_PASSWORD: ${AUCTION_DB_PASSWORD}
+
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+
+      EUREKA_URL: http://discovery-service:8761/eureka/
+
+    ports:
+      - "${AUCTION_STORAGE_SERVICE_PORT}:${AUCTION_STORAGE_SERVICE_PORT}"
+
+    depends_on:
+      auction-postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+
+    networks:
+      - bidwars-network
+
+  # API GATEWAY -----------------------------------------------------------------------
 
   api-gateway:
     build:
       context: .
       args:
         SERVICE_PATH: ./APIGatewayService
+
     container_name: api-gateway
-    environment:
-      - SERVER_PORT=${SERVER_PORT_GATEWAY}
-      - SPRING_APPLICATION_NAME=api-gateway
-      - JWT_SECRET=${JWT_SECRET}
-      - SPRING_DATA_REDIS_HOST=${REDIS_HOST}
-      - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
-      - SPRING_DATA_REDIS_USERNAME=${REDIS_USERNAME}
-      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
-      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://discovery-service:${SERVER_PORT_DISCOVERY}/eureka/
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
 
     ports:
-      - "${SERVER_PORT_GATEWAY}:${SERVER_PORT_GATEWAY}"
+      - "${GATEWAY_SERVICE_PORT}:${GATEWAY_SERVICE_PORT}"
+
+    environment:
+      GATEWAY_SERVICE_PORT: ${GATEWAY_SERVICE_PORT}
+
+      RATE_LIMIT_REDIS_HOST: rate-limit-redis
+      RATE_LIMIT_REDIS_PORT: 6379
+      RATE_LIMIT_REDIS_USERNAME: default
+      RATE_LIMIT_REDIS_PASSWORD: ${RATE_LIMIT_REDIS_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+
+      EUREKA_URL: http://discovery-service:8761/eureka/
 
     depends_on:
-      redis:
-        condition: service_healthy
       discovery-service:
         condition: service_healthy
-      auth-service:
+      user-service:
+        condition: service_started
+      auction-service:
+        condition: service_started
+      auction-storage-service:
+        condition: service_started
+      rate-limit-redis:
         condition: service_healthy
 
     networks:
-      - api-gateway-network
-      
+      - bidwars-network
+
+  # SPRING BOOT ADMIN -----------------------------------------------------------------------
+
   admin-server:
     build:
       context: .
       args:
         SERVICE_PATH: ./AdminServer
+
     container_name: admin-server
-    environment:
-      - SERVER_PORT=9090
-      - SPRING_APPLICATION_NAME=admin-server
-      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://discovery-service:${SERVER_PORT_DISCOVERY}/eureka/
-      - SPRING_BOOT_ADMIN_DISCOVERY_SERVICES=*
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
 
     ports:
-      - "9090:9090"
+      - "${ADMIN_SERVICE_PORT}:${ADMIN_SERVICE_PORT}"
+
+    environment:
+      ADMIN_SERVICE_PORT: ${ADMIN_SERVICE_PORT}
+      EUREKA_URL: http://discovery-service:8761/eureka/
 
     depends_on:
       discovery-service:
         condition: service_healthy
 
     networks:
-      - api-gateway-network
+      - bidwars-network
 
 volumes:
-  postgres_data:
+  user_postgres_data:
+  auction_postgres_data:
+  auction_redis_data:
+  rate_limit_redis_data:
+  rabbitmq_data:
+  rabbitmq_logs:
 
 networks:
-  api-gateway-network:
+  bidwars-network:
     driver: bridge

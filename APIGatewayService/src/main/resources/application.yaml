@@ -5,9 +5,8 @@ spring:
     gateway:
       server:
         webflux:
-          routes: # Custom routing added here
-
-            #         -----Routing for User Service Admin endpoint-----
+          routes:
+            #         -----Routing for User Service Admin auth endpoint-----
             - id: Auth-Admin-Service
               uri: lb://USER-SERVICE
               predicates:
@@ -18,7 +17,7 @@ spring:
                   args:
                     requiredRole: "ROLE_ADMIN"
 
-            #         -----Routing for User Service public endpoints-----
+            #         -----Routing for User Service public auth endpoints-----
             - id: Auth-Public-Service
               uri: lb://USER-SERVICE
               predicates:
@@ -39,17 +38,9 @@ spring:
                 - AuthenticationFilter
                 - name: RequestRateLimiter
                   args:
-                    key-resolver: "#{@perIPKeyResolver}"
+                    key-resolver: "#{@perJWTKeyResolver}"
                     redis-rate-limiter.replenishRate: 3
                     redis-rate-limiter.burstCapacity: 3
-
-#              - id: Auction-Service
-#                uri: lb://AUCTION-SERVICE
-#                predicates:
-#                  - Path=/auction/**
-#          discovery:
-#            locator:
-#              enabled: true
 
 management:
   health:

@@ -1,6 +1,5 @@
 package com.cyberronin.apigatewayservice.util;
 
-import com.cyberronin.apigatewayservice.filter.AuthenticationFilter;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -12,9 +11,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
 
 // JWT util to validate the token and get claims
 
@@ -24,7 +20,7 @@ public class JwtUtil {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
     private final SecretKey key;
 
-    public JwtUtil(@Value("${JWT_SECRET}") String secret)
+    public JwtUtil(@Value("${jwt.secret}") String secret)
     {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }

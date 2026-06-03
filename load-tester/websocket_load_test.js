@@ -50,10 +50,9 @@ export default function () {
 
                     socket.send(
                         `SUBSCRIBE
-id:sub-${__VU}
-destination:/topic/auction/${config.auction_id}
-
-\0`
+                        id:sub-${__VU}
+                        destination:/topic/auction/${config.auction_id}
+                        \0`
                     );
 
                     const intervalId = socket.setInterval(() => {
@@ -62,15 +61,14 @@ destination:/topic/auction/${config.auction_id}
 
                         socket.send(
                             `SEND
-destination:/app/place-bid/${config.auction_id}
-content-type:application/json
-
-${JSON.stringify({
+                            destination:/app/place-bid/${config.auction_id}
+                            content-type:application/json
+                            ${JSON.stringify({
                                 userId: config.user.userId,
                                 username: `${config.user.username}_${__VU}`,
                                 amount: amount
                             })}
-\0`
+                            \0`
                         );
 
                         bidsSent.add(1);

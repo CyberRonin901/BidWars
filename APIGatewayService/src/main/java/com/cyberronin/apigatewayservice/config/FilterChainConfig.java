@@ -52,9 +52,9 @@ public class FilterChainConfig {
                             .filter(roleFilter.apply(config -> config.setRequiredRole("ROLE_USER")))
 
 //                          Rate Limiting
-//                            .requestRateLimiter(config -> config
-//                                .setRateLimiter(redisRateLimiter)
-//                                .setKeyResolver(perJWTKeyResolver))
+                            .requestRateLimiter(config -> config
+                                .setRateLimiter(redisRateLimiter)
+                                .setKeyResolver(perJWTKeyResolver))
 
 //                          Retry (exponential retry + jitter)
                             .retry(retryConfig -> retryConfig
