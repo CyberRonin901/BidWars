@@ -39,7 +39,7 @@ public class BidSortedSetRepo {
         return false;
     }
 
-    public boolean executeBidScript(UUID auctionId, BidDTO bidDto)
+    public boolean executeBidScript(UUID auctionId, BidDTO bidDto, long timestamp)
     {
         String bidKey = Prefix.BID_ZSET + auctionId.toString();
         String auctionHashKey = Prefix.AUCTION_HASH + auctionId.toString();
@@ -55,7 +55,7 @@ public class BidSortedSetRepo {
                 keys,
                 bidDto.userId().toString(),
                 String.valueOf(bidDto.amount()),
-                String.valueOf(Instant.now().toEpochMilli()));
+                String.valueOf(timestamp));
 
         return result != null && result == 1L; // true = success | false = failure
     }

@@ -25,13 +25,13 @@ public class BidService {
     private final RabbitMQProducer rabbitMQProducer;
 
     @Value("${websocket.destination}")
-    private static String WEBSOCKET_DESTINATION;
+    private String WEBSOCKET_DESTINATION;
 
     public void processAndBroadcastBid(UUID auctionId, BidDTO bidDto)
     {
         long timestamp = Instant.now().toEpochMilli();
 
-        boolean isHighestBid = bidRepo.executeBidScript(auctionId, bidDto);
+        boolean isHighestBid = bidRepo.executeBidScript(auctionId, bidDto, timestamp);
 
 //         Broadcast if and only if the Lua script confirmed it was valid and successful
         if (isHighestBid) {

@@ -25,7 +25,7 @@ public class RabbitMQConsumer {
     private final SimpMessagingTemplate messagingTemplate;
 
     @Value("${websocket.destination}")
-    private static String WEBSOCKET_DESTINATION;
+    private String WEBSOCKET_DESTINATION;
 
     @Value("${rabbitmq.exchange.name}")
     private String exchangeName;

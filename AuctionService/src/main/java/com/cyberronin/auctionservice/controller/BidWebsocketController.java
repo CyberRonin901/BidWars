@@ -12,7 +12,6 @@ import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/auction")
 public class BidWebsocketController {
 
     // Connect to http://_____/ws

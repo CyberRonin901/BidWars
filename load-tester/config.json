@@ -1,0 +1,16 @@
+{
+  "websocket_url": "ws://localhost:8000/auction/ws/websocket",
+  "auction_id": "76b0bd1f-69c0-4aa7-950c-f43ae2c7e289",
+
+  "vus": 100,
+  "duration": "10s",
+  "base_bid": 100,
+  "bid_interval_ms": 100,
+
+  "jwt_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhODhjNTU5NS01ZjJjLTQwODctYTRjZi0wOWE1NmQ4MWFmMWYiLCJ1c2VybmFtZSI6IkFkaXR5YU5hbmRhIiwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc4MDM5NTcwMSwiZXhwIjoxNzgwNDgyMTAxfQ.wSHOAFZt7uIS-F5YCS-rD17GHc2B3kmFA_2cdVWsI-TbPBe0AHTkjXe6gCEhFQhaUN9X64QB1t2r5Qa_HiUs0g",
+
+  "user": {
+    "userId": "a88c5595-5f2c-4087-a4cf-09a56d81af1f",
+    "username": "load_tester"
+  }
+}

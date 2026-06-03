@@ -65,7 +65,7 @@ public class FilterChainConfig {
                                 .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true)
                             )
 
-                            // Circuit Breaker
+//                             Circuit Breaker
                             .circuitBreaker(cbConfig -> cbConfig
                                 .setName("CIRCUIT-BREAKER")
                                 .setFallbackUri("forward:/fallback/message"))

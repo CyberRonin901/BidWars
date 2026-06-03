@@ -33,7 +33,7 @@ public class AuctionService
     private final SimpMessagingTemplate messagingTemplate;
 
     @Value("${websocket.destination}")
-    private static String WEBSOCKET_DESTINATION;
+    private String WEBSOCKET_DESTINATION;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuctionService.class);
 

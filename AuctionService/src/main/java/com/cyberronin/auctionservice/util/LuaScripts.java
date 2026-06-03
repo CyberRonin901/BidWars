@@ -36,7 +36,8 @@ public class LuaScripts
         -- Combined multi-field HSET to minimize internal execution cycles
         redis.call('HSET', auction_hash,
             'highestBidUserId', user_id,
-            'highestBidAmount', tostring(bid_amount)
+            'highestBidAmount', tostring(bid_amount),
+            'highestBidTimestamp', current_time
         )
         
         return 1
