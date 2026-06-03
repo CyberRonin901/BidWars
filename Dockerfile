@@ -8,7 +8,10 @@ WORKDIR /build
 
 COPY ${SERVICE_PATH}/pom.xml ./service/
 
-RUN mvn -f ./service/pom.xml dependency:go-offline -B
+RUN mvn -f ./service/pom.xml \
+    dependency:go-offline \
+    dependency:resolve-plugins \
+    -B
 
 COPY ${SERVICE_PATH}/src ./service/src
 
