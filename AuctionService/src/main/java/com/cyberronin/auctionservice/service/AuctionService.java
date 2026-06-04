@@ -40,9 +40,9 @@ public class AuctionService
     private final UserServiceInterface userServiceInterface;
     private final AuctionStorageServiceInterface auctionStorageServiceInterface;
 
-    public Auction createAuction(CreateAuctionRequestDTO reqObj)
+    public Auction createAuction(UUID sellerId, CreateAuctionRequestDTO reqObj)
     {
-         UserResponseDTO sellerDetails = userServiceInterface.getUserDetails(reqObj.sellerId());
+         UserResponseDTO sellerDetails = userServiceInterface.getUserDetails(sellerId);
 
         long now = Instant.now().toEpochMilli();
         long ttl = reqObj.expiresIn() * 1000;
@@ -53,7 +53,7 @@ public class AuctionService
                  .createdAt(now)
                  .expiresAt(expiresAt)
                  .status(AuctionStatus.ACTIVE)
-                 .sellerId(reqObj.sellerId())
+                 .sellerId(sellerId)
                  .sellerName(sellerDetails.username())
                  .sellerLocation(sellerDetails.location())
                  .itemName(reqObj.itemName())

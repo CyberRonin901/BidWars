@@ -20,8 +20,9 @@ public class AuctionRestController {
     private final AuctionService service;
 
     @PostMapping("/create")
-    public ResponseEntity<Auction> createAuction(@RequestBody CreateAuctionRequestDTO reqObj) {
-        Auction createdAuction = service.createAuction(reqObj);
+    public ResponseEntity<Auction> createAuction(@RequestHeader("X-User-Id") UUID sellerId,
+                                                 @RequestBody CreateAuctionRequestDTO reqObj) {
+        Auction createdAuction = service.createAuction(sellerId, reqObj);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(createdAuction);
