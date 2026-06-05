@@ -1,0 +1,684 @@
+openapi: 3.0.3
+info:
+  title: BidWars API
+  description: |
+    OpenAPI 3.0 specification for the BidWars microservices application.
+    This document specifies the endpoints, HTTP methods, headers, and request/response schemas.
+    
+    ### Security & Headers:
+    - **Secure Endpoints**: Require the `Authorization: Bearer <JWT>` header at the API Gateway.
+    - **Gateway Injection**: The Gateway verifies the JWT and injects `X-User-Id`, `X-User-Name`, and `X-User-Role` headers downstream.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: API Gateway (Public Access)
+  - url: http://localhost:8100
+    description: User Service (Direct Access)
+  - url: http://localhost:8200
+    description: Auction Service (Direct Access)
+  - url: http://localhost:8090
+    description: Auction Storage Service (Internal Direct Access)
+paths:
+  /auth/user/register:
+    post:
+      tags:
+        - Auth & Users
+      summary: Register a new regular user
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: User successfully registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid input or validation failed.
+
+  /auth/admin/register:
+    post:
+      tags:
+        - Auth & Users
+      summary: Register a new admin user
+      operationId: registerAdmin
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: Admin successfully registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthorized. Invalid or missing token.
+        '403':
+          description: Forbidden. Admin role required.
+
+  /auth/login:
+    post:
+      tags:
+        - Auth & Users
+      summary: Authenticate user and obtain a JWT token
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successfully authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid credentials.
+
+  /user/getDetails:
+    get:
+      tags:
+        - Auth & Users
+      summary: Get authenticated user details
+      operationId: getUserDetails
+      security:
+        - BearerAuth: []
+        - GatewayUserId: []
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          description: The UUID of the user. Injected automatically by the API Gateway downstream.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully retrieved user details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized.
+        '404':
+          description: User not found.
+
+  /auction/create:
+    post:
+      tags:
+        - Auctions
+      summary: Create a new auction listing
+      operationId: createAuction
+      security:
+        - BearerAuth: []
+        - GatewayUserId: []
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          description: Seller's user ID. Injected automatically by the Gateway.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionRequest'
+      responses:
+        '201':
+          description: Auction successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auction'
+        '400':
+          description: Invalid request body.
+        '401':
+          description: Unauthorized.
+
+  /auction/get/{id}:
+    get:
+      tags:
+        - Auctions
+      summary: Get auction details by ID
+      operationId: getAuctionById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the auction.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Auction retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auction'
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Auction not found.
+
+  /auction/get-all-active:
+    get:
+      tags:
+        - Auctions
+      summary: Get all active auctions
+      operationId: getAllActiveAuctions
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved list of active auctions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Auction'
+        '401':
+          description: Unauthorized.
+
+  /auction/cancel/{id}:
+    get:
+      tags:
+        - Auctions
+      summary: Cancel an auction by ID
+      operationId: cancelAuction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the auction.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Auction successfully cancelled.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Auction Cancelled with id: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Auction not found.
+
+  /auction/get-seller-details/{id}:
+    get:
+      tags:
+        - Auctions
+      summary: Get details of the seller for a given auction
+      operationId: getSellerDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the auction.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Seller details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailsResponse'
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Auction or seller not found.
+
+  /auction/get-highest-bidder-details/{id}:
+    get:
+      tags:
+        - Auctions
+      summary: Get details of the highest bidder for a given auction
+      operationId: getHighestBidderDetails
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the auction.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Highest bidder details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailsResponse'
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Auction or bidder not found.
+
+  /storage/auction/get/{id}:
+    get:
+      tags:
+        - Storage (Internal)
+      summary: Retrieve raw auction entity from database
+      operationId: getRawAuctionById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the auction.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Raw auction entity retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawAuction'
+        '404':
+          description: Auction not found in DB.
+
+  /storage/auction/get/seller-id/{auctionId}:
+    get:
+      tags:
+        - Storage (Internal)
+      summary: Retrieve the UUID of the seller for an auction
+      operationId: getSellerIdByAuction
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          description: The UUID of the auction.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Seller ID retrieved.
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+
+  /storage/auction/get/highest-bidder-id/{auctionId}:
+    get:
+      tags:
+        - Storage (Internal)
+      summary: Retrieve the UUID of the highest bidder for an auction
+      operationId: getHighestBidderIdByAuction
+      parameters:
+        - name: auctionId
+          in: path
+          required: true
+          description: The UUID of the auction.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Highest bidder ID retrieved.
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+
+  /storage/bid/bidHistory/{id}:
+    get:
+      tags:
+        - Storage (Internal)
+      summary: Retrieve bid history for a given auction ID
+      operationId: getBidHistory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the auction.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Bid history list retrieved.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StorageBidDTO'
+
+  /fallback/message:
+    get:
+      tags:
+        - Gateway
+      summary: API Gateway fallback response
+      operationId: getFallbackMessage
+      responses:
+        '503':
+          description: Service Unavailable.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "The service is currently unavailable. Please try again later."
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter the token as `Bearer <JWT_token>`
+    GatewayUserId:
+      type: apiKey
+      in: header
+      name: X-User-Id
+      description: Verified User ID injected by API Gateway downstream.
+  schemas:
+    UserRequest:
+      type: object
+      required:
+        - username
+        - password
+        - mobile
+        - location
+      properties:
+        username:
+          type: string
+          minLength: 4
+          maxLength: 20
+          description: Unique username.
+          example: "john_doe"
+        password:
+          type: string
+          minLength: 8
+          description: Secret password.
+          example: "securepassword"
+        mobile:
+          type: string
+          description: Contact mobile number.
+          example: "+1234567890"
+        location:
+          type: string
+          description: User location.
+          example: "New York"
+          
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+        username:
+          type: string
+          example: "john_doe"
+        role:
+          type: string
+          example: "ROLE_USER"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-05T13:30:00Z"
+          
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: "john_doe"
+        password:
+          type: string
+          example: "securepassword"
+          
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: The signed JWT token.
+          example: "eyJhbGciOiJIUzI1NiIsIn..."
+        type:
+          type: string
+          default: Bearer
+          example: "Bearer"
+        expiresAt:
+          type: string
+          format: date-time
+          example: "2026-06-10T13:30:00Z"
+          
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+        username:
+          type: string
+          example: "john_doe"
+        mobile:
+          type: string
+          example: "+1234567890"
+        location:
+          type: string
+          example: "New York"
+        passwordHash:
+          type: string
+          example: "$2a$10$7R6vD..."
+        role:
+          type: string
+          example: "ROLE_USER"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-06-05T13:30:00Z"
+          
+    CreateAuctionRequest:
+      type: object
+      required:
+        - expiresIn
+        - itemName
+        - itemDescription
+        - itemImageUrl
+        - startingAmount
+      properties:
+        expiresIn:
+          type: integer
+          format: int64
+          description: Duration of the auction in seconds.
+          example: 3600
+        itemName:
+          type: string
+          example: "Vintage Camera"
+        itemDescription:
+          type: string
+          example: "1970 Leica M3 in mint condition"
+        itemImageUrl:
+          type: string
+          format: uri
+          example: "https://example.com/leica.jpg"
+        startingAmount:
+          type: integer
+          format: int64
+          description: Starting bid amount with shifted decimal (e.g. $500.00 is represented as 50000).
+          example: 50000
+          
+    Auction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+        createdAt:
+          type: integer
+          format: int64
+          description: Epoch timestamp (milliseconds) when the auction started.
+          example: 1780752000000
+        expiresAt:
+          type: integer
+          format: int64
+          description: Epoch timestamp (milliseconds) when the auction ends.
+          example: 1780755600000
+        status:
+          type: string
+          enum: [ACTIVE, ENDED, CANCELLED, UNKNOWN, PENDING]
+          example: "ACTIVE"
+        sellerId:
+          type: string
+          format: uuid
+          example: "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+        sellerName:
+          type: string
+          example: "john_doe"
+        sellerLocation:
+          type: string
+          example: "New York"
+        itemName:
+          type: string
+          example: "Vintage Camera"
+        itemDescription:
+          type: string
+          example: "1970 Leica M3 in mint condition"
+        itemImageUrl:
+          type: string
+          format: uri
+          example: "https://example.com/leica.jpg"
+        startingAmount:
+          type: integer
+          format: int64
+          example: 50000
+        highestBidAmount:
+          type: integer
+          format: int64
+          example: 55000
+        highestBidUserId:
+          type: string
+          format: uuid
+          nullable: true
+          example: "2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
+        highestBidTimestamp:
+          type: integer
+          format: int64
+          example: 1780753400000
+          
+    UserDetailsResponse:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "john_doe"
+        mobile:
+          type: string
+          example: "+1234567890"
+        location:
+          type: string
+          example: "New York"
+          
+    RawAuction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+        createdAt:
+          type: integer
+          format: int64
+          example: 1780752000000
+        expiresAt:
+          type: integer
+          format: int64
+          example: 1780755600000
+        status:
+          type: string
+          enum: [ACTIVE, ENDED, CANCELLED, UNKNOWN, PENDING]
+          example: "ACTIVE"
+        sellerId:
+          type: string
+          format: uuid
+          example: "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
+        itemName:
+          type: string
+          example: "Vintage Camera"
+        itemDescription:
+          type: string
+          example: "1970 Leica M3 in mint condition"
+        itemImageUrl:
+          type: string
+          example: "https://example.com/leica.jpg"
+        startingAmount:
+          type: integer
+          format: int64
+          example: 50000
+        highestBidAmount:
+          type: integer
+          format: int64
+          example: 0
+        highestBidUserId:
+          type: string
+          format: uuid
+          nullable: true
+          example: null
+        highestBidTimestamp:
+          type: integer
+          format: int64
+          example: 0
+          
+    StorageBidDTO:
+      type: object
+      properties:
+        auctionId:
+          type: string
+          format: uuid
+          example: "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+        userId:
+          type: string
+          format: uuid
+          example: "2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
+        amount:
+          type: integer
+          format: int64
+          example: 55000
+        timestamp:
+          type: integer
+          format: int64
+          description: Unix epoch time in milliseconds.
+          example: 1780753400000

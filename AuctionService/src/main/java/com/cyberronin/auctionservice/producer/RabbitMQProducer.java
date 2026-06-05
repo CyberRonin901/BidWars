@@ -29,7 +29,7 @@ public class RabbitMQProducer
     @Value("${rabbitmq.routing-key.auction.status.update}")
     private String auctionStatusUpdateRoutingKey;
 
-    // --- Auction Highest Bid Update ---
+    // --- Auction Update ---
     @Value("${rabbitmq.routing-key.auction.update}")
     private String auctionUpdateRoutingKey;
 
@@ -80,16 +80,16 @@ public class RabbitMQProducer
         );
     }
 
-    public void auctionHighestBidUpdate(AuctionHighestBidUpdateEventDTO auctionUpdateDto)
-    {
-        LOGGER.info("Auction Highest Bid Update Event -> {}", auctionUpdateDto);
-
-        rabbitTemplate.convertAndSend(
-                exchangeName,
-                auctionUpdateRoutingKey,
-                auctionUpdateDto
-        );
-    }
+//    public void auctionHighestBidUpdate(AuctionHighestBidUpdateEventDTO auctionUpdateDto)
+//    {
+//        LOGGER.info("Auction Highest Bid Update Event -> {}", auctionUpdateDto);
+//
+//        rabbitTemplate.convertAndSend(
+//                exchangeName,
+//                auctionUpdateRoutingKey,
+//                auctionUpdateDto
+//        );
+//    }
 
     public void bidPlaced(BidPlacedEventDTO bid)
     {

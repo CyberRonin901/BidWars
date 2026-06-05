@@ -47,14 +47,14 @@ public class BidService {
                     )
             );
 
-            rabbitMQProducer.auctionHighestBidUpdate(
-                    new AuctionHighestBidUpdateEventDTO(
-                            auctionId,
-                            bidDto.userId(),
-                            bidDto.amount(),
-                            timestamp
-                    )
-            );
+//            rabbitMQProducer.auctionHighestBidUpdate(
+//                    new AuctionHighestBidUpdateEventDTO(
+//                            auctionId,
+//                            bidDto.userId(),
+//                            bidDto.amount(),
+//                            timestamp
+//                    )
+//            );
         }
     }
 }

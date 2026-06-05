@@ -2,6 +2,7 @@ package com.cyberronin.auctionstorageservice.service;
 
 import com.cyberronin.auctionstorageservice.dto.AuctionCreatedEventDTO;
 import com.cyberronin.auctionstorageservice.dto.AuctionHighestBidUpdateEventDTO;
+import com.cyberronin.auctionstorageservice.dto.BidPlacedEventDTO;
 import com.cyberronin.auctionstorageservice.model.Auction;
 import com.cyberronin.auctionstorageservice.model.AuctionStatus;
 import com.cyberronin.auctionstorageservice.repo.AuctionRepo;
@@ -39,13 +40,13 @@ public class AuctionService {
     }
 
     @Transactional
-    public void updateHighestBid(AuctionHighestBidUpdateEventDTO dto)
+    public void updateHighestBid(BidPlacedEventDTO dto)
     {
         auctionRepo.updateHighestBidderDetailsByAuctionId(
-                dto.id(),
-                dto.highestBidUserId(),
-                dto.highestBidTimestamp(),
-                dto.highestBidTimestamp()
+                dto.auctionId(),
+                dto.userId(),
+                dto.amount(),
+                dto.timestamp()
         );
     }
 

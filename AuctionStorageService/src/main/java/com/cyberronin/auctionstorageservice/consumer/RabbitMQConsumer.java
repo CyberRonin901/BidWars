@@ -43,17 +43,18 @@ public class RabbitMQConsumer {
         auctionService.updateStatus(dto.id(), dto.status());
     }
 
-    @RabbitListener(queues = {"${rabbitmq.queue.auction.update}"})
-    public void auctionUpdateHighestBid(AuctionHighestBidUpdateEventDTO dto)
-    {
-        LOGGER.info("Consume auction highest bid update event -> {}", dto);
-        auctionService.updateHighestBid(dto);
-    }
+//    @RabbitListener(queues = {"${rabbitmq.queue.auction.update}"})
+//    public void auctionUpdateHighestBid(AuctionHighestBidUpdateEventDTO dto)
+//    {
+//        LOGGER.info("Consume auction highest bid update event -> {}", dto);
+//        auctionService.updateHighestBid(dto);
+//    }
 
     @RabbitListener(queues = {"${rabbitmq.queue.bid.placed}"})
     public void bidPlaced(BidPlacedEventDTO dto)
     {
         LOGGER.info("Consume bid placed event -> {}", dto);
         bidService.save(dto);
+        auctionService.updateHighestBid(dto);
     }
 }
