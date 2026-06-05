@@ -52,14 +52,14 @@ public class FilterChainConfig {
                             .filter(roleFilter.apply(config -> config.setRequiredRole("ROLE_USER")))
 
 //                          Rate Limiting
-                            .requestRateLimiter(config -> config
-                                .setRateLimiter(redisRateLimiter)
-                                .setKeyResolver(perJWTKeyResolver))
+//                            .requestRateLimiter(config -> config
+//                                .setRateLimiter(redisRateLimiter)
+//                                .setKeyResolver(perJWTKeyResolver))
 
 //                          Retry (exponential retry + jitter)
                             .retry(retryConfig -> retryConfig
                                 .setRetries(3)
-                                .setMethods(HttpMethod.GET, HttpMethod.PUT)
+                                .setMethods(HttpMethod.GET)
                                 .setStatuses(HttpStatus.BAD_GATEWAY, HttpStatus.SERVICE_UNAVAILABLE, HttpStatus.GATEWAY_TIMEOUT)
                                 // param order: firstBackoff, maxBackoff, factor, basedOnPreviousDelay
                                 .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true)
@@ -67,10 +67,40 @@ public class FilterChainConfig {
 
 //                             Circuit Breaker
                             .circuitBreaker(cbConfig -> cbConfig
-                                .setName("CIRCUIT-BREAKER")
+                                .setName("AUCTION-CIRCUIT-BREAKER")
                                 .setFallbackUri("forward:/fallback/message"))
                     )
                     .uri("lb://AUCTION-SERVICE")
+            )
+            .route("AUCTION-STORAGE-SERVICE", r -> r
+                    .path("/storage/bid-history/**")
+                    .filters(f -> f
+
+//                          Authentication
+                            .filter(authFilter.apply(new AuthenticationFilter.Config()))
+//                          Authorization
+                            .filter(roleFilter.apply(config -> config.setRequiredRole("ROLE_USER")))
+
+//                          Rate Limiting
+                            .requestRateLimiter(config -> config
+                                .setRateLimiter(redisRateLimiter)
+                                .setKeyResolver(perJWTKeyResolver))
+
+//                          Retry (exponential retry + jitter)
+                            .retry(retryConfig -> retryConfig
+                                .setRetries(3)
+                                .setMethods(HttpMethod.GET)
+                                .setStatuses(HttpStatus.BAD_GATEWAY, HttpStatus.SERVICE_UNAVAILABLE, HttpStatus.GATEWAY_TIMEOUT)
+                                // param order: firstBackoff, maxBackoff, factor, basedOnPreviousDelay
+                                .setBackoff(Duration.ofMillis(100), Duration.ofSeconds(1), 2, true)
+                            )
+
+//                             Circuit Breaker
+                            .circuitBreaker(cbConfig -> cbConfig
+                                .setName("AUCTION-STORAGE-CIRCUIT-BREAKER")
+                                .setFallbackUri("forward:/fallback/message"))
+                    )
+                    .uri("lb://AUCTION-STORAGE-SERVICE")
             )
             .build();
     }

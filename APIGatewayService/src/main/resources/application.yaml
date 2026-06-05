@@ -41,6 +41,19 @@ spring:
                     key-resolver: "#{@perJWTKeyResolver}"
                     redis-rate-limiter.replenishRate: 3
                     redis-rate-limiter.burstCapacity: 3
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOriginPatterns:
+                  - "*"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+                allowCredentials: true
 
 management:
   health:

@@ -1,16 +1,16 @@
 {
-  "websocket_url": "ws://localhost:8000/auction/ws/websocket",
-  "auction_id": "76b0bd1f-69c0-4aa7-950c-f43ae2c7e289",
+  "websocket_url": "ws://localhost:8000/auction/ws-raw",
+  "auction_id": "e8c34537-e78c-4939-aa79-bef2942185af",
 
-  "vus": 100,
-  "duration": "10s",
+  "vus": 200,
+  "duration": "60s",
   "base_bid": 100,
-  "bid_interval_ms": 100,
+  "bid_interval_ms": 50,
 
-  "jwt_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhODhjNTU5NS01ZjJjLTQwODctYTRjZi0wOWE1NmQ4MWFmMWYiLCJ1c2VybmFtZSI6IkFkaXR5YU5hbmRhIiwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc4MDM5NTcwMSwiZXhwIjoxNzgwNDgyMTAxfQ.wSHOAFZt7uIS-F5YCS-rD17GHc2B3kmFA_2cdVWsI-TbPBe0AHTkjXe6gCEhFQhaUN9X64QB1t2r5Qa_HiUs0g",
+  "jwt_token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMmI4Y2UzNy00YzQ2LTRkODktYmQzOS1iY2I4OWRjNjNmMDIiLCJ1c2VybmFtZSI6IkFkaXR5YU5hbmRhIiwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc4MDY3NDY5OSwiZXhwIjoxNzgxMTA2Njk5fQ.TXRKgzu9Y7ajdjYehyaZl8MWNI3wFsdchLrVMQ4BSOVk9IOlZR-QMUjpWOTfUzvnytZcGPvUZFQHaKCN044cSw",
 
   "user": {
-    "userId": "a88c5595-5f2c-4087-a4cf-09a56d81af1f",
+    "userId": "12b8ce37-4c46-4d89-bd39-bcb89dc63f02",
     "username": "load_tester"
   }
 }

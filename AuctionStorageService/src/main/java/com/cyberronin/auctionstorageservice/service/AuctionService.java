@@ -1,7 +1,6 @@
 package com.cyberronin.auctionstorageservice.service;
 
 import com.cyberronin.auctionstorageservice.dto.AuctionCreatedEventDTO;
-import com.cyberronin.auctionstorageservice.dto.AuctionHighestBidUpdateEventDTO;
 import com.cyberronin.auctionstorageservice.dto.BidPlacedEventDTO;
 import com.cyberronin.auctionstorageservice.model.Auction;
 import com.cyberronin.auctionstorageservice.model.AuctionStatus;

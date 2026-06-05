@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/storage/bid")
+@RequestMapping("/storage")
 @RequiredArgsConstructor
 public class BidController {
 
@@ -23,7 +23,7 @@ public class BidController {
 //        return ResponseEntity.ok().build();
 //    }
 
-    @GetMapping("/bidHistory/{id}")
+    @GetMapping("/bid-history/{id}")
     public ResponseEntity<List<BidDTO>> getBidHistory(@PathVariable("id") UUID auctionId){
         return ResponseEntity.ok(bidService.getBidHistory(auctionId));
     }

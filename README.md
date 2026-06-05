@@ -23,6 +23,17 @@ The system handles high-frequency bid requests in-memory via Redis (leveraging L
 
 ---
 
+## Key Features
+
+* **Distributed Microservices**: Clean modular architecture using Spring Boot, Eureka Service Discovery, Spring Boot Admin monitoring, and API Gateway routing.
+* **Atomic Bid Validations**: In-memory Redis active auction state combined with custom atomic Lua scripts to execute thread-safe bidding checks.
+* **Asynchronous Persistence**: Decoupled persistence flow with RabbitMQ queues syncing active bidding states back to persistent PostgreSQL databases.
+* **Real-Time Subscription**: Bid updates and auction expirations are broadcasted immediately to active bidders via STOMP WebSocket channels.
+* **Direct Query Optimization**: Bypasses the high-throughput active Auction Service for read-heavy history operations, routing bid history and raw auction data requests directly through the Gateway to the Auction Storage Service.
+* **Resilient Request Pipeline**: Protected by Gateway authentication, JWT-based rate limiting, exponential retries, and dedicated circuit breakers (AUCTION-CIRCUIT-BREAKER and AUCTION-STORAGE-CIRCUIT-BREAKER) that trip at a 50% failure threshold with a 5-second recovery window.
+
+---
+
 ## System Details and Design Diagrams
 
 ### High-Level Architecture (HLD)
@@ -62,6 +73,7 @@ The complete list of HTTP endpoints, parameters, header requirements, and payloa
 * **OpenAPI Specification**: Refer to [API_docs.yaml](./API_docs.yaml)
 * **Interactive UI**: Open [API_docs.html](./API_docs.html) directly in any web browser to view and interact with the endpoints using the Swagger UI interface.
 
+> Note: **Only the `bid-history` endpoint** (`/storage/bid-history/{id}`) is exposed to external clients through the API Gateway. All other storage service endpoints are internal.
 ---
 
 ## Run Using Docker
@@ -99,3 +111,17 @@ Edit the `.env` file.
 | **user-service** | `8100` | `8100` | User account authentication and profile service |
 | **auction-service** | `8200` | `8200` | Main bidding, WebSocket, and active auction service |
 | **auction-storage-service** | `8090` | `8090` | PostgreSQL storage manager (internal Feign APIs) |
+
+## Load Test Results
+
+* **Total VUs:** 200
+* **Iterations:** 200 (≈ 3.31 iterations/s)
+* **Average iteration duration:** 1m00s (≈ 60.4s)
+* **Successful connections:** 200 (≈ 3.31/s)
+* **Bids sent:** 194,102 (≈ 3,211 bids/s)
+* **WebSocket messages sent:** 194,502 (≈ 3,218 msgs/s)
+* **WebSocket messages received:** 656,440 (≈ 10,859 msgs/s)
+* **Data sent:** 45 MB (≈ 737 KB/s)
+* **Data received:** 200 MB (≈ 3.3 MB/s)
+* **WebSocket connection latency:** avg 120.97 ms (min 34.68 ms, max 278.84 ms)
+* **WebSocket session duration:** avg 1 min (≈ 60 s)

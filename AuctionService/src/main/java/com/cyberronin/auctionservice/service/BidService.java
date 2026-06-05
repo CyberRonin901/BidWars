@@ -1,6 +1,5 @@
 package com.cyberronin.auctionservice.service;
 
-import com.cyberronin.auctionservice.dto.AuctionHighestBidUpdateEventDTO;
 import com.cyberronin.auctionservice.dto.BidDTO;
 import com.cyberronin.auctionservice.dto.BidPlacedEventDTO;
 import com.cyberronin.auctionservice.producer.RabbitMQProducer;

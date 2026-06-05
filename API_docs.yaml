@@ -8,7 +8,7 @@ info:
     ### Security & Headers:
     - **Secure Endpoints**: Require the `Authorization: Bearer <JWT>` header at the API Gateway.
     - **Gateway Injection**: The Gateway verifies the JWT and injects `X-User-Id`, `X-User-Name`, and `X-User-Role` headers downstream.
-  version: 1.0.0
+  version: 1.1.0
 servers:
   - url: http://localhost:8000
     description: API Gateway (Public Access)
@@ -17,7 +17,7 @@ servers:
   - url: http://localhost:8200
     description: Auction Service (Direct Access)
   - url: http://localhost:8090
-    description: Auction Storage Service (Internal Direct Access)
+    description: Auction Storage Service (Direct Access)
 paths:
   /auth/user/register:
     post:
@@ -286,82 +286,18 @@ paths:
         '404':
           description: Auction or bidder not found.
 
-  /storage/auction/get/{id}:
-    get:
-      tags:
-        - Storage (Internal)
-      summary: Retrieve raw auction entity from database
-      operationId: getRawAuctionById
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The UUID of the auction.
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Raw auction entity retrieved.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RawAuction'
-        '404':
-          description: Auction not found in DB.
 
-  /storage/auction/get/seller-id/{auctionId}:
-    get:
-      tags:
-        - Storage (Internal)
-      summary: Retrieve the UUID of the seller for an auction
-      operationId: getSellerIdByAuction
-      parameters:
-        - name: auctionId
-          in: path
-          required: true
-          description: The UUID of the auction.
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Seller ID retrieved.
-          content:
-            application/json:
-              schema:
-                type: string
-                format: uuid
 
-  /storage/auction/get/highest-bidder-id/{auctionId}:
-    get:
-      tags:
-        - Storage (Internal)
-      summary: Retrieve the UUID of the highest bidder for an auction
-      operationId: getHighestBidderIdByAuction
-      parameters:
-        - name: auctionId
-          in: path
-          required: true
-          description: The UUID of the auction.
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Highest bidder ID retrieved.
-          content:
-            application/json:
-              schema:
-                type: string
-                format: uuid
 
-  /storage/bid/bidHistory/{id}:
+  /storage/bid-history/{id}:
     get:
       tags:
-        - Storage (Internal)
-      summary: Retrieve bid history for a given auction ID
-      operationId: getBidHistory
+        - Storage & History
+      summary: Retrieve bid history directly from storage database
+      description: This endpoint bypasses the Auction Service to fetch bid logs directly.
+      operationId: getBidHistoryDirect
+      security:
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
@@ -378,7 +314,9 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StorageBidDTO'
+                  $ref: '#/components/schemas/BidDTO'
+        '401':
+          description: Unauthorized.
 
   /fallback/message:
     get:
@@ -395,7 +333,16 @@ paths:
                 type: string
                 example: "The service is currently unavailable. Please try again later."
 
-components:
+  /auction/ws:
+    get:
+      tags:
+        - Websocket
+      summary: WebSocket endpoint for auction updates (STOMP)
+      description: Endpoint for establishing WebSocket connection at /auction/ws.
+      operationId: auctionWebsocket
+      security:
+        - BearerAuth: []
+  components:
   securitySchemes:
     BearerAuth:
       type: http
@@ -662,7 +609,7 @@ components:
           format: int64
           example: 0
           
-    StorageBidDTO:
+    BidDTO:
       type: object
       properties:
         auctionId:

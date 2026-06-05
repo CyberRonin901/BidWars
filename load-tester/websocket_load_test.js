@@ -27,10 +27,9 @@ export default function () {
         },
         function (socket) {
 
-            successfulConnections.add(1);
-
             socket.on('open', () => {
 
+                successfulConnections.add(1);
                 console.log(`VU ${__VU} connected`);
 
                 // STOMP CONNECT
@@ -38,37 +37,41 @@ export default function () {
                     'CONNECT\n' +
                     'accept-version:1.2\n' +
                     'heart-beat:10000,10000\n' +
-                    `Authorization:Bearer ${config.jwt_token}\n\n` +
+                    `Authorization: Bearer ${config.jwt_token}\n\n` +
                     '\0'
                 );
             });
 
             socket.on('message', (msg) => {
 
-                // Wait for STOMP CONNECTED before subscribing/sending bids
-                if (msg.includes('CONNECTED')) {
+                console.log(`VU ${__VU} received: ${msg}`);
 
+                // Wait for STOMP CONNECTED frame
+                if (msg.startsWith('CONNECTED')) {
+
+                    // Subscribe to auction updates
                     socket.send(
-                        `SUBSCRIBE
-                        id:sub-${__VU}
-                        destination:/topic/auction/${config.auction_id}
-                        \0`
+                        'SUBSCRIBE\n' +
+                        `id:sub-${__VU}\n` +
+                        `destination:/topic/auction/${config.auction_id}\n\n` +
+                        '\0'
                     );
 
                     const intervalId = socket.setInterval(() => {
 
-                        const amount = config.base_bid + Date.now();;
+                        const body = JSON.stringify({
+                            userId: config.user.userId,
+                            username: `${config.user.username}_${__VU}`,
+                            amount: config.base_bid + Date.now()
+                        });
 
                         socket.send(
-                            `SEND
-                            destination:/app/place-bid/${config.auction_id}
-                            content-type:application/json
-                            ${JSON.stringify({
-                                userId: config.user.userId,
-                                username: `${config.user.username}_${__VU}`,
-                                amount: amount
-                            })}
-                            \0`
+                            'SEND\n' +
+                            `destination:/app/place-bid/${config.auction_id}\n` +
+                            'content-type:application/json\n' +
+                            `content-length:${body.length}\n\n` +
+                            body +
+                            '\0'
                         );
 
                         bidsSent.add(1);

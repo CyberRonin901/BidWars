@@ -17,24 +17,24 @@ import java.util.UUID;
 @FeignClient(name = "AUCTION-STORAGE-SERVICE", path = "/storage")
 public interface AuctionStorageServiceInterface {
 
-    @PostMapping("/auction/save")
-    Void saveAuction(@RequestBody Auction reqObj);
+//    @PostMapping("/auction/save")
+//    Void saveAuction(@RequestBody Auction reqObj);
 
     @GetMapping("/auction/get/{id}")
     AuctionResponseDTO getAuctionById(@PathVariable("id") UUID auctionId);
 
-    @GetMapping("/get/seller-id/{auctionId}")
+    @GetMapping("/auction/get/seller-id/{auctionId}")
     UUID getSellerId(@PathVariable UUID auctionId);
 
-    @GetMapping("/get/highest-bidder-id/{auctionId}")
+    @GetMapping("/auction/get/highest-bidder-id/{auctionId}")
     UUID getHighestBidderId(@PathVariable UUID auctionId);
 
-    @PostMapping("/auction/updateHighestBid/{id}")
-    Void updateHighestBid(@PathVariable("id") UUID auctionId, @RequestBody UpdateHighestBidReqDTO reqObj);
+//    @PostMapping("/auction/updateHighestBid/{id}")
+//    Void updateHighestBid(@PathVariable("id") UUID auctionId, @RequestBody UpdateHighestBidReqDTO reqObj);
 
-    @PostMapping("/bid/save/{id}")
-    Void save(@RequestBody Bid requestDTO, @PathVariable("id") UUID auctionId);
+//    @PostMapping("/bid/save/{id}")
+//    Void save(@RequestBody Bid requestDTO, @PathVariable("id") UUID auctionId);
 
-    @GetMapping("/bid/bidHistory/{id}")
+    @GetMapping("/bid/bid-history/{id}")
     List<Bid> getBidHistory(@PathVariable("id") UUID auctionId);
 }
