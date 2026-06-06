@@ -115,13 +115,13 @@ Edit the `.env` file.
 ## Load Test Results
 
 * **Total VUs:** 200
-* **Iterations:** 200 (≈ 3.31 iterations/s)
-* **Average iteration duration:** 1m00s (≈ 60.4s)
-* **Successful connections:** 200 (≈ 3.31/s)
+* **Iterations:** 200
+* **Duration:** 60s
+* **Successful connections:** 200
 * **Bids sent:** 194,102 (≈ 3,211 bids/s)
 * **WebSocket messages sent:** 194,502 (≈ 3,218 msgs/s)
 * **WebSocket messages received:** 656,440 (≈ 10,859 msgs/s)
 * **Data sent:** 45 MB (≈ 737 KB/s)
 * **Data received:** 200 MB (≈ 3.3 MB/s)
 * **WebSocket connection latency:** avg 120.97 ms (min 34.68 ms, max 278.84 ms)
-* **WebSocket session duration:** avg 1 min (≈ 60 s)
+* **WebSocket session duration:** avg 1 min
