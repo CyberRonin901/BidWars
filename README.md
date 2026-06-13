@@ -44,6 +44,16 @@ The system handles high-frequency bid requests in-memory via Redis (leveraging L
 
 ![Database Schema](./Diagrams/BidWars-DB-schema.png)
 
+### Core Auction and Bidding Sequences
+
+#### Create Auction Flow
+
+![Create Auction Flow](./Diagrams/createAuction.png)
+
+#### Place Bid Flow
+
+![Place Bid Flow](./Diagrams/placeBid.png)
+
 ### User Authentication Flows
 
 #### Registration Flow
@@ -54,16 +64,6 @@ The system handles high-frequency bid requests in-memory via Redis (leveraging L
 
 #### JWT Validation Flow
 ![JWT Validation Flow](./Diagrams/jwt-validate.png)
-
-### Core Auction and Bidding Sequences
-
-#### Create Auction Flow
-
-![Create Auction Flow](./Diagrams/createAuction.png)
-
-#### Place Bid Flow
-
-![Place Bid Flow](./Diagrams/placeBid.png)
 
 ---
 
